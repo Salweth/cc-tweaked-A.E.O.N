@@ -1,4 +1,5 @@
 local define = dofile("/aeon/core/app.lua").define
+local shell = dofile("/aeon/shell/shell.lua")
 
 local function count(items)
   return items and #items or 0
@@ -42,7 +43,8 @@ local function draw(runtime)
   print(("  Tasks: %s"):format(tostring(tasks and count(tasks.list()) or 0)))
   print(("  Sessions: %s"):format(tostring(auth and count(auth.listSessions()) or 0)))
   print("")
-  print("Server console is passive. Use role/workstation startup_app override for an interactive shell.")
+  print("Press Enter to open the admin shell.")
+  print("Press R to refresh this dashboard.")
 end
 
 local app = define({
@@ -68,6 +70,15 @@ local app = define({
       while true do
         local eventName, timerId = coroutine.yield()
         if eventName == "timer" and timerId == timer then
+          break
+        end
+
+        if eventName == "key" and timerId == keys.enter then
+          shell.run(runtime)
+          break
+        end
+
+        if eventName == "char" and (timerId == "r" or timerId == "R") then
           break
         end
 

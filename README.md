@@ -45,6 +45,7 @@ wget run https://raw.githubusercontent.com/Salweth/cc-tweaked-A.E.O.N/main/insta
 ```
 
 The legacy `installer.lua` now forwards to the workstation installer.
+The server dashboard opens by default, and `Enter` opens the interactive admin shell.
 
 ## Update
 
