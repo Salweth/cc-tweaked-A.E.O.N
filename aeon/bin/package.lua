@@ -4,6 +4,7 @@ local command = {}
 
 function command.run(_context, args)
   local mode = args[1] or "list"
+  local roleName = _context and _context.role and _context.role.role or "server"
 
   if mode == "list" then
     local items = packageCore.listAvailable()
@@ -66,7 +67,28 @@ function command.run(_context, args)
     return
   end
 
-  print("usage: package [list|inspect [disk]|write <id> [disk]]")
+  if mode == "install" then
+    local id = args[2]
+    if not id then
+      print("usage: package install <id>")
+      return
+    end
+
+    local ok, result = packageCore.installFromRepo(roleName, id)
+    if not ok then
+      print(("install failed: %s"):format(tostring(result)))
+      return
+    end
+
+    print(("installed %s %s locally"):format(
+      tostring(result.name or id),
+      tostring(result.version or "unknown")
+    ))
+    print("reboot required to activate service entrypoints")
+    return
+  end
+
+  print("usage: package [list|inspect [disk]|write <id> [disk]|install <id>]")
 end
 
 return command

@@ -410,6 +410,67 @@ function packageCore.installFromDisk(role, mountPath)
   return true, db.installed[manifest.id]
 end
 
+function packageCore.installFromRepo(role, packageId)
+  local packageRoot = fs.combine(SERVER_REPO, packageId)
+  if not fs.exists(packageRoot) or not fs.isDir(packageRoot) then
+    return false, ("package not found: %s"):format(packageId)
+  end
+
+  local manifest, err = loadManifest(packageRoot)
+  if not manifest then
+    return false, err
+  end
+
+  local valid, validErr = validateManifest(manifest, role)
+  if not valid then
+    return false, validErr
+  end
+
+  local copiedFiles = {}
+  for _, entry in ipairs(manifest.files) do
+    local source = fs.combine(packageRoot, entry.from)
+    if not fs.exists(source) or fs.isDir(source) then
+      return false, ("package file missing: %s"):format(entry.from)
+    end
+
+    local copyOk, copyErr = copyFile(source, entry.to)
+    if not copyOk then
+      return false, copyErr
+    end
+
+    table.insert(copiedFiles, entry.to)
+  end
+
+  local hookOk, hookErr = runHook(fs.combine(packageRoot, "install.lua"), {
+    role = role,
+    mount = nil,
+    manifest = manifest,
+  })
+  if not hookOk then
+    return false, hookErr
+  end
+
+  local db = packageCore.loadDb()
+  db.installed[manifest.id] = {
+    name = manifest.name or manifest.id,
+    version = manifest.version,
+    description = manifest.description,
+    issuer = manifest.issuer or "unknown",
+    signature = manifest.signature,
+    permissions = manifest.permissions or {},
+    entrypoints = manifest.entrypoints or {},
+    files = copiedFiles,
+    installed_at = nowUtc(),
+  }
+
+  local saveOk, saveErr = packageCore.saveDb(db)
+  if not saveOk then
+    return false, saveErr
+  end
+
+  return true, db.installed[manifest.id]
+end
+
 function packageCore.removeInstalled(id)
   local db = packageCore.loadDb()
   local entry = db.installed[id]
