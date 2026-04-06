@@ -9,8 +9,26 @@ local function loadModule(path)
   return result
 end
 
-local function loadStartupApp(config)
-  local appName = config.startup_app or "terminal"
+local function resolveStartupAppName(config, role)
+  if config.startup_app and config.startup_app ~= "" then
+    return config.startup_app
+  end
+
+  local startupApps = config.startup_apps or {}
+  local roleName = role and role.role or "workstation"
+  if startupApps[roleName] then
+    return startupApps[roleName]
+  end
+
+  if roleName == "server" then
+    return "server"
+  end
+
+  return "terminal"
+end
+
+local function loadStartupApp(config, role)
+  local appName = resolveStartupAppName(config, role)
   return loadModule(("/aeon/apps/%s.lua"):format(appName)), appName
 end
 
@@ -20,12 +38,14 @@ function bootstrap.run()
   local logger = loadModule("/aeon/core/logger.lua")
   local registry = loadModule("/aeon/core/registry.lua")
   local services = loadModule("/aeon/core/service.lua")
-  local startupApp, startupAppName = loadStartupApp(config.load("/aeon/etc/aeon.cfg"))
+  local systemConfig = config.load("/aeon/etc/aeon.cfg")
+  local roleConfig = config.load("/aeon/etc/role.cfg")
+  local startupApp, startupAppName = loadStartupApp(systemConfig, roleConfig)
 
   local runtime = {
     started_at = os.epoch and os.epoch("utc") or nil,
-    config = config.load("/aeon/etc/aeon.cfg"),
-    role = config.load("/aeon/etc/role.cfg"),
+    config = systemConfig,
+    role = roleConfig,
   }
 
   logger.init({
@@ -56,6 +76,11 @@ function bootstrap.run()
   services.register("auth", loadModule("/aeon/services/svc_auth.lua"))
   services.register("tasks", loadModule("/aeon/services/svc_tasks.lua"))
   services.register("net", loadModule("/aeon/services/svc_net.lua"))
+
+  if runtime.role.role == "server" then
+    services.register("server", loadModule("/aeon/services/svc_server.lua"))
+  end
+
   services.startEssential()
 
   kernel.spawn("app:" .. startupAppName, startupApp.run, {

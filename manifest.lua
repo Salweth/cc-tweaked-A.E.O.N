@@ -1,5 +1,5 @@
 return {
-  version = "0.5.0",
+  version = "0.6.0",
   channel = "main",
   files = {
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
@@ -14,6 +14,7 @@ return {
     { path = "/aeon/core/logger.lua", source = "aeon/core/logger.lua", mode = "replace" },
     { path = "/aeon/core/registry.lua", source = "aeon/core/registry.lua", mode = "replace" },
     { path = "/aeon/core/service.lua", source = "aeon/core/service.lua", mode = "replace" },
+    { path = "/aeon/apps/server.lua", source = "aeon/apps/server.lua", mode = "replace" },
     { path = "/aeon/apps/terminal.lua", source = "aeon/apps/terminal.lua", mode = "replace" },
     { path = "/aeon/shell/shell.lua", source = "aeon/shell/shell.lua", mode = "replace" },
     { path = "/aeon/services/svc_log.lua", source = "aeon/services/svc_log.lua", mode = "replace" },
@@ -21,6 +22,7 @@ return {
     { path = "/aeon/services/svc_auth.lua", source = "aeon/services/svc_auth.lua", mode = "replace" },
     { path = "/aeon/services/svc_tasks.lua", source = "aeon/services/svc_tasks.lua", mode = "replace" },
     { path = "/aeon/services/svc_net.lua", source = "aeon/services/svc_net.lua", mode = "replace" },
+    { path = "/aeon/services/svc_server.lua", source = "aeon/services/svc_server.lua", mode = "replace" },
     { path = "/aeon/drivers/display.lua", source = "aeon/drivers/display.lua", mode = "replace" },
     { path = "/aeon/drivers/modem.lua", source = "aeon/drivers/modem.lua", mode = "replace" },
     { path = "/aeon/bin/help.lua", source = "aeon/bin/help.lua", mode = "replace" },

@@ -10,6 +10,7 @@ Current runtime capabilities:
 - local auth sessions with clearance and role helpers
 - task introspection service
 - AEON multi-node discovery and request/response transport
+- server-core dashboard and remote node handlers
 - install/update workflow via GitHub raw files
 
 Target in-game layout:
@@ -61,7 +62,7 @@ This includes:
 
 ## Current Runtime
 
-Version `0.5.x` focuses on solidifying the system layer before business features.
+Version `0.6.x` focuses on locking the runtime and introducing the first dedicated server-core profile.
 
 Main services currently available:
 - `log`
@@ -69,9 +70,22 @@ Main services currently available:
 - `auth`
 - `tasks`
 - `net`
+- `server` (server role only)
 
 Server-oriented commands available:
 - `net`
 - `node`
 - `send`
 - `ping`
+
+## Server Role
+
+Set `/aeon/etc/role.cfg` to:
+
+```lua
+return {
+  role = "server"
+}
+```
+
+With the default config, a server node boots into the passive `server` app while workstations keep the interactive `terminal` app.
