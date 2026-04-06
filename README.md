@@ -32,13 +32,19 @@ Target in-game layout:
 
 ## Install
 
-From a CC:Tweaked computer with HTTP enabled:
+From a CC:Tweaked workstation with HTTP enabled:
 
 ```lua
-wget run https://raw.githubusercontent.com/Salweth/cc-tweaked-A.E.O.N/main/installer.lua
+wget run https://raw.githubusercontent.com/Salweth/cc-tweaked-A.E.O.N/main/installer-workstation.lua
 ```
 
-If you prefer Pastebin, upload `installer.lua` there and run the pasted script. The installer then fetches the manifest and the remaining files directly from GitHub.
+From a dedicated AEON server node:
+
+```lua
+wget run https://raw.githubusercontent.com/Salweth/cc-tweaked-A.E.O.N/main/installer-server.lua
+```
+
+The legacy `installer.lua` now forwards to the workstation installer.
 
 ## Update
 
@@ -48,7 +54,7 @@ Once AEON is installed:
 update
 ```
 
-This downloads the latest `installer.lua`, applies the manifest, and preserves local config files in `/aeon/etc` by default.
+`update` now uses the installer recorded in `/aeon/etc/update.cfg`, so a workstation stays on the workstation profile and a server stays on the server profile.
 
 ## Architecture
 
@@ -77,6 +83,14 @@ Server-oriented commands available:
 - `node`
 - `send`
 - `ping`
+
+Workstation terminal commands include:
+- `cat`
+- `edit`
+- `ls`
+- `login`
+- `logout`
+- `auth`
 
 ## Server Role
 

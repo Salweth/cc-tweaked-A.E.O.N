@@ -13,12 +13,26 @@ function command.run(_context, args)
     cfg = dofile("/aeon/etc/update.cfg")
   end
 
+  local roleName = "workstation"
+  if fs.exists("/aeon/etc/role.cfg") then
+    local roleCfg = dofile("/aeon/etc/role.cfg")
+    roleName = roleCfg.role or roleName
+  end
+
   local owner = cfg.owner or "Salweth"
   local repo = cfg.repo or "cc-tweaked-A.E.O.N"
   local selectedBranch = branch or cfg.branch or "main"
-  local url = ("https://raw.githubusercontent.com/%s/%s/%s/installer.lua"):format(owner, repo, selectedBranch)
+  local installer = cfg.installer
+  if not installer or installer == "" then
+    if roleName == "server" then
+      installer = "installer-server.lua"
+    else
+      installer = "installer-workstation.lua"
+    end
+  end
+  local url = ("https://raw.githubusercontent.com/%s/%s/%s/%s"):format(owner, repo, selectedBranch, installer)
 
-  print(("update source: %s/%s [%s]"):format(owner, repo, selectedBranch))
+  print(("update source: %s/%s [%s] via %s"):format(owner, repo, selectedBranch, installer))
 
   local response = http.get(url, nil, true)
   if not response then
@@ -29,7 +43,7 @@ function command.run(_context, args)
   local source = response.readAll()
   response.close()
 
-  local fn, err = load(source, "@installer.lua", "t", _ENV)
+  local fn, err = load(source, "@" .. installer, "t", _ENV)
   if not fn then
     print(("invalid installer: %s"):format(tostring(err)))
     return

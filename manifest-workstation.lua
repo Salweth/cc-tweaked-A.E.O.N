@@ -1,7 +1,7 @@
 return {
   version = "0.7.0",
-  channel = "main",
   profile = "workstation",
+  channel = "main",
   files = {
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
     { path = "/aeon/boot/init.lua", source = "aeon/boot/init.lua", mode = "replace" },
