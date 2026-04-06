@@ -55,6 +55,7 @@ local function emit(level, message)
   local line = ("[%s] [%s] [%s] %s"):format(now(), logger.state.label, string.upper(level), tostring(message))
 
   local consoleLevel = LEVELS[logger.state.console_level] or LEVELS.warn
+  local incoming = LEVELS[level] or LEVELS.info
   if incoming >= consoleLevel then
     print(line)
   end
