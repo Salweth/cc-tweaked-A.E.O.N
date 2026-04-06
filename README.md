@@ -9,7 +9,7 @@ Current runtime capabilities:
 - central peripheral registry
 - local auth sessions with clearance and role helpers
 - task introspection service
-- AEON multi-node discovery and request/response transport
+- AEON multi-node discovery and request/response transport over wireless modems
 - server-core dashboard and remote node handlers
 - install/update workflow via GitHub raw files
 
@@ -56,6 +56,24 @@ update
 ```
 
 `update` now uses the installer recorded in `/aeon/etc/update.cfg`, so a workstation stays on the workstation profile and a server stays on the server profile.
+
+AEON networking is designed around wireless or ender modems. Wired modems expose shared cable peripherals, which is not a valid topology for isolated AEON nodes.
+
+Recommended network config shape:
+
+```lua
+return {
+  directory_channel = 42,
+  node_channel = 1042,
+  reply_channel = 1042,
+  server = "server-core",
+  address_book = {
+    ["server-core"] = 1042,
+  },
+}
+```
+
+Use one shared `directory_channel` for discovery, and one dedicated `node_channel` per machine for direct traffic.
 
 ## Architecture
 

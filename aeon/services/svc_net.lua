@@ -1,5 +1,6 @@
 local define = dofile("/aeon/core/service_contract.lua").define
 local events = dofile("/aeon/core/events.lua")
+local modemDriver = dofile("/aeon/drivers/modem.lua")
 
 local function makeMessageId()
   local epoch = os.epoch and os.epoch("utc") or math.floor(os.clock() * 1000)
@@ -15,6 +16,7 @@ local function buildMessage(runtime, config, messageType, action, data, target, 
   return {
     id = makeMessageId(),
     from = runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID()),
+    from_channel = config.node_channel,
     to = target or config.server or "server-core",
     type = messageType or "request",
     action = action,
@@ -32,13 +34,24 @@ local service = define({
     if fs.exists("/aeon/etc/network.cfg") then
       networkCfg = dofile("/aeon/etc/network.cfg")
     end
+
     networkCfg.discovery_interval = networkCfg.discovery_interval or 60
     networkCfg.request_timeout = networkCfg.request_timeout or 5
+    networkCfg.directory_channel = networkCfg.directory_channel or networkCfg.channel or 42
+    networkCfg.node_channel = networkCfg.node_channel or networkCfg.reply_channel or (1000 + os.getComputerID())
+    networkCfg.reply_channel = networkCfg.reply_channel or networkCfg.node_channel
+    networkCfg.address_book = networkCfg.address_book or {}
 
-    local modem = context.registry.find("modem")
+    local modem = modemDriver.detect(context.registry, {
+      preferWireless = true,
+    })
     local hostname = context.runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID())
     local pending = {}
     local nodes = {}
+
+    if modem and not modemDriver.isWireless(modem) then
+      context.log.warn("wireless modem not found; AEON network isolation is not guaranteed")
+    end
 
     local function recordNode(payload, meta)
       local nodeId = payload.from or "unknown"
@@ -48,25 +61,45 @@ local service = define({
         capabilities = payload.data and payload.data.capabilities or {},
         last_seen = nowUtc(),
         distance = meta and meta.distance or nil,
-        channel = meta and meta.channel or nil,
+        channel = payload.from_channel or (meta and meta.reply_channel) or (meta and meta.channel) or nil,
+        directory_channel = payload.data and payload.data.directory_channel or nil,
+        wireless = payload.data and payload.data.wireless or false,
       }
     end
 
-    local function transmit(message)
+    local function resolveTargetChannel(message, fallbackChannel)
+      if fallbackChannel then
+        return fallbackChannel
+      end
+
+      if message.to and nodes[message.to] and nodes[message.to].channel then
+        return nodes[message.to].channel
+      end
+
+      if message.to and networkCfg.address_book[message.to] then
+        return networkCfg.address_book[message.to]
+      end
+
+      return networkCfg.directory_channel
+    end
+
+    local function transmit(message, targetChannel)
       if not modem or not modem.object or not modem.object.transmit then
         return false, "modem unavailable"
       end
 
-      if not networkCfg.channel then
+      local channel = resolveTargetChannel(message, targetChannel)
+      if not channel then
         return false, "network channel missing"
       end
 
-      modem.object.transmit(networkCfg.channel, networkCfg.reply_channel or networkCfg.channel, message)
-      context.log.info(("net tx %s type=%s to=%s action=%s"):format(
+      modem.object.transmit(channel, networkCfg.reply_channel or networkCfg.node_channel, message)
+      context.log.info(("net tx %s type=%s to=%s action=%s channel=%s"):format(
         message.id,
         tostring(message.type),
         tostring(message.to),
-        tostring(message.action)
+        tostring(message.action),
+        tostring(channel)
       ))
       return true, message
     end
@@ -86,15 +119,25 @@ local service = define({
           hostname = hostname,
           role = context.role.role or "workstation",
           capabilities = { "auth", "tasks", "net" },
+          directory_channel = networkCfg.directory_channel,
+          node_channel = networkCfg.node_channel,
+          wireless = modemDriver.isWireless(modem),
         },
         target or "*"
       )
-      return transmit(message)
+      return transmit(message, networkCfg.directory_channel)
     end
 
-    if modem and modem.object and modem.object.open and networkCfg.channel then
-      modem.object.open(networkCfg.channel)
-      context.log.info(("network channel opened: %s"):format(tostring(networkCfg.channel)))
+    if modem and modem.object and modem.object.open then
+      modem.object.open(networkCfg.directory_channel)
+      if networkCfg.node_channel ~= networkCfg.directory_channel then
+        modem.object.open(networkCfg.node_channel)
+      end
+      context.log.info(("network channels opened: directory=%s node=%s wireless=%s"):format(
+        tostring(networkCfg.directory_channel),
+        tostring(networkCfg.node_channel),
+        tostring(modemDriver.isWireless(modem))
+      ))
     else
       context.log.warn("network service started without active modem channel")
     end
@@ -106,7 +149,8 @@ local service = define({
       local payload = event[5]
       local distance = event[6]
 
-      if networkCfg.channel and channel ~= networkCfg.channel then
+      local acceptedChannel = channel == networkCfg.directory_channel or channel == networkCfg.node_channel
+      if not acceptedChannel then
         return
       end
 
@@ -116,12 +160,13 @@ local service = define({
         end
 
         context.log.info(
-          ("net rx %s type=%s from=%s action=%s side=%s"):format(
+          ("net rx %s type=%s from=%s action=%s side=%s channel=%s"):format(
             tostring(payload.id),
             tostring(payload.type),
             tostring(payload.from),
             tostring(payload.action),
-            tostring(side)
+            tostring(side),
+            tostring(channel)
           )
         )
 
@@ -162,7 +207,7 @@ local service = define({
             payload.from,
             payload.id
           )
-          transmit(response)
+          transmit(response, payload.from_channel or replyChannel)
           return
         end
 
@@ -181,7 +226,7 @@ local service = define({
             payload.from,
             payload.id
           )
-          transmit(response)
+          transmit(response, payload.from_channel or replyChannel)
           return
         end
 
@@ -214,6 +259,7 @@ local service = define({
       modem = modem,
       config = networkCfg,
       hostname = hostname,
+      isWireless = modemDriver.isWireless(modem),
       envelope = function(action, data, target, messageType, replyTo)
         return buildMessage(context.runtime, networkCfg, messageType or "request", action, data, target, replyTo)
       end,
@@ -231,7 +277,7 @@ local service = define({
           requestMessage.from,
           requestMessage.id
         )
-        return transmit(message)
+        return transmit(message, requestMessage.from_channel)
       end,
       fail = function(requestMessage, errorMessage)
         local message = buildMessage(
@@ -243,14 +289,17 @@ local service = define({
           requestMessage.from,
           requestMessage.id
         )
-        return transmit(message)
+        return transmit(message, requestMessage.from_channel)
       end,
       discover = function()
         local message = buildMessage(context.runtime, networkCfg, "request", "node.discover", {
           hostname = hostname,
           role = context.role.role or "workstation",
+          directory_channel = networkCfg.directory_channel,
+          node_channel = networkCfg.node_channel,
+          wireless = modemDriver.isWireless(modem),
         }, "*")
-        return transmit(message)
+        return transmit(message, networkCfg.directory_channel)
       end,
       listNodes = function()
         local items = {}

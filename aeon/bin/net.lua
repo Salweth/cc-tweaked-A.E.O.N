@@ -8,7 +8,9 @@ function command.run(context, _args)
   end
 
   print(("hostname: %s"):format(net.hostname or context.hostname))
-  print(("channel: %s"):format(tostring(net.config.channel)))
+  print(("wireless: %s"):format(tostring(net.isWireless)))
+  print(("directory_channel: %s"):format(tostring(net.config.directory_channel)))
+  print(("node_channel: %s"):format(tostring(net.config.node_channel)))
   print(("reply_channel: %s"):format(tostring(net.config.reply_channel)))
   print(("server: %s"):format(tostring(net.config.server)))
   print(("nodes: %s"):format(tostring(#net.listNodes())))

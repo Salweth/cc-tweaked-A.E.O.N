@@ -54,6 +54,8 @@ function command.run(context, args)
     print(("role: %s"):format(tostring(node.role)))
     print(("last_seen: %s"):format(tostring(node.last_seen)))
     print(("distance: %s"):format(tostring(node.distance)))
+    print(("channel: %s"):format(tostring(node.channel)))
+    print(("wireless: %s"):format(tostring(node.wireless)))
     print(("capabilities: %s"):format(table.concat(node.capabilities or {}, ", ")))
     return
   end
