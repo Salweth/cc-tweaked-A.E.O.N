@@ -59,6 +59,12 @@ function serviceManager.get(name)
   return entry and entry.instance or nil
 end
 
+function serviceManager.registerListener(eventName, handler)
+  if serviceManager.runtime and serviceManager.runtime.kernel then
+    serviceManager.runtime.kernel.on(eventName, handler)
+  end
+end
+
 function serviceManager.list()
   local result = {}
 

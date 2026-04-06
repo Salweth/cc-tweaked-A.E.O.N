@@ -65,6 +65,7 @@ end
 function shellApp.run(runtime)
   local context = makeContext(runtime)
   drawBanner(context)
+  context.logger.info("terminal app online")
 
   while true do
     write(("[%s@%s]$ "):format(tostring(context.role.role or "node"), context.hostname))

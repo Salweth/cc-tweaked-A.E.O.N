@@ -9,12 +9,18 @@ local function loadModule(path)
   return result
 end
 
+local function loadStartupApp(config)
+  local appName = config.startup_app or "terminal"
+  return loadModule(("/aeon/apps/%s.lua"):format(appName)), appName
+end
+
 function bootstrap.run()
   local config = loadModule("/aeon/core/config.lua")
+  local kernel = loadModule("/aeon/core/kernel.lua")
   local logger = loadModule("/aeon/core/logger.lua")
   local registry = loadModule("/aeon/core/registry.lua")
   local services = loadModule("/aeon/core/service.lua")
-  local shell = loadModule("/aeon/shell/shell.lua")
+  local startupApp, startupAppName = loadStartupApp(config.load("/aeon/etc/aeon.cfg"))
 
   local runtime = {
     started_at = os.epoch and os.epoch("utc") or nil,
@@ -31,6 +37,7 @@ function bootstrap.run()
   logger.info("bootstrap started")
   registry.scan()
 
+  runtime.kernel = kernel
   runtime.logger = logger
   runtime.registry = registry
   runtime.services = services
@@ -42,13 +49,16 @@ function bootstrap.run()
     )
   )
 
+  kernel.init(runtime)
   services.init(runtime)
+  services.register("log", loadModule("/aeon/services/svc_log.lua"))
   services.register("registry", loadModule("/aeon/services/svc_registry.lua"))
   services.register("auth", loadModule("/aeon/services/svc_auth.lua"))
   services.register("net", loadModule("/aeon/services/svc_net.lua"))
   services.startEssential()
 
-  shell.run(runtime)
+  kernel.spawn("app:" .. startupAppName, startupApp.run)
+  kernel.run()
 end
 
 return bootstrap

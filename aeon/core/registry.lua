@@ -1,5 +1,6 @@
 local registry = {
-  devices = {}
+  devices = {},
+  byName = {},
 }
 
 local function normalizeDevice(name)
@@ -16,9 +17,12 @@ end
 
 function registry.scan()
   registry.devices = {}
+  registry.byName = {}
 
   for _, name in ipairs(peripheral.getNames()) do
-    table.insert(registry.devices, normalizeDevice(name))
+    local entry = normalizeDevice(name)
+    table.insert(registry.devices, entry)
+    registry.byName[name] = entry
   end
 
   table.sort(registry.devices, function(a, b)
@@ -34,6 +38,10 @@ end
 
 function registry.list()
   return registry.devices
+end
+
+function registry.get(name)
+  return registry.byName[name]
 end
 
 function registry.find(deviceType)
@@ -56,6 +64,10 @@ function registry.findAll(deviceType)
   end
 
   return matches
+end
+
+function registry.refresh()
+  return registry.scan()
 end
 
 return registry
