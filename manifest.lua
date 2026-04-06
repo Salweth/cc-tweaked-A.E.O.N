@@ -1,11 +1,14 @@
 return {
-  version = "0.2.0",
+  version = "0.3.0",
   channel = "main",
   files = {
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
     { path = "/aeon/boot/init.lua", source = "aeon/boot/init.lua", mode = "replace" },
     { path = "/aeon/boot/bootstrap.lua", source = "aeon/boot/bootstrap.lua", mode = "replace" },
     { path = "/aeon/core/config.lua", source = "aeon/core/config.lua", mode = "replace" },
+    { path = "/aeon/core/events.lua", source = "aeon/core/events.lua", mode = "replace" },
+    { path = "/aeon/core/service_contract.lua", source = "aeon/core/service_contract.lua", mode = "replace" },
+    { path = "/aeon/core/app.lua", source = "aeon/core/app.lua", mode = "replace" },
     { path = "/aeon/core/kernel.lua", source = "aeon/core/kernel.lua", mode = "replace" },
     { path = "/aeon/core/logger.lua", source = "aeon/core/logger.lua", mode = "replace" },
     { path = "/aeon/core/registry.lua", source = "aeon/core/registry.lua", mode = "replace" },

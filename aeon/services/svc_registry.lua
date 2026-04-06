@@ -1,34 +1,39 @@
-local service = {
+local define = dofile("/aeon/core/service_contract.lua").define
+local events = dofile("/aeon/core/events.lua")
+
+local service = define({
+  name = "registry",
   essential = true,
-}
+  start = function(context)
+    context.log.info("service online")
 
-function service.start(runtime)
-  runtime.logger.info("service registry online")
+    context.on("peripheral", function()
+      context.registry.refresh()
+      context.log.info("registry refreshed after peripheral attach")
+      context.emit(events.global("registry.changed"), "attach")
+    end)
 
-  runtime.kernel.on("peripheral", function()
-    runtime.registry.refresh()
-    runtime.logger.info("registry refreshed after peripheral attach")
-  end)
+    context.on("peripheral_detach", function()
+      context.registry.refresh()
+      context.log.warn("registry refreshed after peripheral detach")
+      context.emit(events.global("registry.changed"), "detach")
+    end)
 
-  runtime.kernel.on("peripheral_detach", function()
-    runtime.registry.refresh()
-    runtime.logger.warn("registry refreshed after peripheral detach")
-  end)
-
-  return {
-    scan = function()
-      return runtime.registry.scan()
-    end,
-    list = function()
-      return runtime.registry.list()
-    end,
-    find = function(deviceType)
-      return runtime.registry.find(deviceType)
-    end,
-    get = function(name)
-      return runtime.registry.get(name)
-    end,
-  }
-end
+    return {
+      scan = function()
+        return context.registry.scan()
+      end,
+      list = function()
+        return context.registry.list()
+      end,
+      find = function(deviceType)
+        return context.registry.find(deviceType)
+      end,
+      get = function(name)
+        return context.registry.get(name)
+      end,
+    }
+  end,
+})
 
 return service

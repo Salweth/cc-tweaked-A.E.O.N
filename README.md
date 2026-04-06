@@ -45,3 +45,13 @@ update
 ```
 
 This downloads the latest `installer.lua`, applies the manifest, and preserves local config files in `/aeon/etc` by default.
+
+## Architecture
+
+Runtime contracts are documented in `ARCHITECTURE.md`.
+
+This includes:
+- task lifecycle
+- service contract
+- app contract
+- global vs private AEON events

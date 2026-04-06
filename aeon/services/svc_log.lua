@@ -1,16 +1,18 @@
-local service = {
+local define = dofile("/aeon/core/service_contract.lua").define
+
+local service = define({
+  name = "log",
   essential = true,
-}
+  start = function(context)
+    context.log.info("service online")
 
-function service.start(runtime)
-  runtime.logger.info("service log online")
-
-  return {
-    debug = runtime.logger.debug,
-    info = runtime.logger.info,
-    warn = runtime.logger.warn,
-    error = runtime.logger.error,
-  }
-end
+    return {
+      debug = context.logger.debug,
+      info = context.logger.info,
+      warn = context.logger.warn,
+      error = context.logger.error,
+    }
+  end,
+})
 
 return service
