@@ -35,7 +35,8 @@ local function draw(runtime)
 
   print("")
   print("Network")
-  print(("  Channel: %s"):format(tostring(net and net.config.channel or "offline")))
+  print(("  Directory: %s"):format(tostring(net and net.config.directory_channel or "offline")))
+  print(("  Node: %s"):format(tostring(net and net.config.node_channel or "offline")))
   print(("  Nodes: %s"):format(tostring(net and count(net.listNodes()) or 0)))
 
   print("")

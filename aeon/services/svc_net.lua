@@ -155,6 +155,10 @@ local service = define({
       end
 
       if type(payload) == "table" and payload.id and payload.action then
+        if payload.from == hostname then
+          return
+        end
+
         if payload.to and payload.to ~= "*" and payload.to ~= hostname then
           return
         end
