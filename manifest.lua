@@ -1,5 +1,5 @@
 return {
-  version = "0.8.0",
+  version = "0.9.0",
   channel = "main",
   profile = "workstation",
   files = {
@@ -9,6 +9,7 @@ return {
     { path = "/aeon/core/config.lua", source = "aeon/core/config.lua", mode = "replace" },
     { path = "/aeon/core/events.lua", source = "aeon/core/events.lua", mode = "replace" },
     { path = "/aeon/core/service_contract.lua", source = "aeon/core/service_contract.lua", mode = "replace" },
+    { path = "/aeon/core/package.lua", source = "aeon/core/package.lua", mode = "replace" },
     { path = "/aeon/core/permissions.lua", source = "aeon/core/permissions.lua", mode = "replace" },
     { path = "/aeon/core/app.lua", source = "aeon/core/app.lua", mode = "replace" },
     { path = "/aeon/core/kernel.lua", source = "aeon/core/kernel.lua", mode = "replace" },
@@ -29,6 +30,7 @@ return {
     { path = "/aeon/bin/ls.lua", source = "aeon/bin/ls.lua", mode = "replace" },
     { path = "/aeon/bin/cat.lua", source = "aeon/bin/cat.lua", mode = "replace" },
     { path = "/aeon/bin/edit.lua", source = "aeon/bin/edit.lua", mode = "replace" },
+    { path = "/aeon/bin/app.lua", source = "aeon/bin/app.lua", mode = "replace" },
     { path = "/aeon/bin/auth.lua", source = "aeon/bin/auth.lua", mode = "replace" },
     { path = "/aeon/bin/net.lua", source = "aeon/bin/net.lua", mode = "replace" },
     { path = "/aeon/bin/node.lua", source = "aeon/bin/node.lua", mode = "replace" },

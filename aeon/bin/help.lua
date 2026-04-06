@@ -1,6 +1,10 @@
 local command = {}
 
 function command.run(_context, _args)
+  local function has(name)
+    return fs.exists(("/aeon/bin/%s.lua"):format(name))
+  end
+
   print("Available commands:")
   print("  help      Show this help message")
   print("  clear     Clear the terminal")
@@ -13,7 +17,13 @@ function command.run(_context, _args)
   print("  login     Open an auth session")
   print("  logout    Close the current auth session")
   print("  auth      Show auth status or active sessions")
+  if has("app") then
+    print("  app       Manage installed optional packages")
+  end
   print("  whoami    Show current identity")
+  if has("package") then
+    print("  package   Server-side package distribution")
+  end
   print("  net       Show AEON network status")
   print("  node      Discover and inspect AEON nodes")
   print("  send      Send a raw AEON request")

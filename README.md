@@ -75,6 +75,19 @@ return {
 
 Use one shared `directory_channel` for discovery, and one dedicated `node_channel` per machine for direct traffic.
 
+## Packages
+
+AEON distinguishes between an app and a package:
+- an app is a functional module
+- a package is a distribution unit
+
+Server nodes can host package sources under `/aeon/packages/`.
+Workstations can install optional packages from floppy disks using `app install disk`.
+
+Current V1 commands:
+- workstation: `app list`, `app info <id>`, `app install disk`, `app remove <id>`
+- server: `package list`, `package inspect disk`, `package write <id> disk`
+
 ## Architecture
 
 Runtime contracts are documented in `ARCHITECTURE.md`.
