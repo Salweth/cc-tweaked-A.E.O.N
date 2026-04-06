@@ -49,6 +49,12 @@ function bootstrap.run()
     role = roleConfig,
   }
 
+  runtime.hostname = runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID())
+  runtime.node_id = runtime.config.node_id or ("%s-%s"):format(
+    runtime.role.role or "node",
+    tostring(os.getComputerID())
+  )
+
   logger.init({
     label = "AEON",
     level = runtime.config.log_level or "info",
@@ -68,7 +74,7 @@ function bootstrap.run()
   logger.info(
     ("machine profile loaded: role=%s hostname=%s"):format(
       tostring(runtime.role.role or "workstation"),
-      tostring(runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID()))
+      tostring(runtime.hostname)
     )
   )
 

@@ -5,6 +5,10 @@ local function count(items)
   return items and #items or 0
 end
 
+local function pushLine(lines, value)
+  table.insert(lines, value)
+end
+
 local function uptimeSeconds(runtime)
   if not runtime.started_at or not os.epoch then
     return 0
@@ -18,34 +22,53 @@ local function draw(runtime)
   local net = services.get("net")
   local auth = services.get("auth")
   local tasks = services.get("tasks")
+  local width, height = term.getSize()
+  local lines = {}
+  local serviceItems = runtime.services.list()
 
   term.setCursorPos(1, 1)
   term.clear()
 
-  print("A.E.O.N SERVER CORE")
-  print(("Host: %s"):format(runtime.config.hostname or "server-core"))
-  print(("Role: %s"):format(tostring(runtime.role.role or "server")))
-  print(("Uptime: %ss"):format(uptimeSeconds(runtime)))
-  print("")
+  pushLine(lines, "A.E.O.N SERVER CORE")
+  pushLine(lines, ("Host: %s"):format(runtime.hostname or runtime.config.hostname or "server"))
+  pushLine(lines, ("Node: %s"):format(runtime.node_id or "unknown"))
+  pushLine(lines, ("Role: %s  Uptime: %ss"):format(
+    tostring(runtime.role.role or "server"),
+    uptimeSeconds(runtime)
+  ))
+  pushLine(lines, ("Net: dir=%s node=%s peers=%s"):format(
+    tostring(net and net.config.directory_channel or "offline"),
+    tostring(net and net.config.node_channel or "offline"),
+    tostring(net and count(net.listNodes()) or 0)
+  ))
+  pushLine(lines, ("Sys: tasks=%s sessions=%s"):format(
+    tostring(tasks and count(tasks.list()) or 0),
+    tostring(auth and count(auth.listSessions()) or 0)
+  ))
+  pushLine(lines, "Services:")
 
-  print("Services")
-  for _, service in ipairs(runtime.services.list()) do
-    print(("  %-12s %s"):format(service.name, service.status))
+  local reservedLines = 9
+  local serviceBudget = math.max(1, height - reservedLines)
+  local visibleServices = math.min(#serviceItems, serviceBudget)
+  for index = 1, visibleServices do
+    local service = serviceItems[index]
+    pushLine(lines, ("  %-12s %s"):format(service.name, service.status))
+  end
+  if #serviceItems > visibleServices then
+    pushLine(lines, ("  ... +%d more"):format(#serviceItems - visibleServices))
   end
 
-  print("")
-  print("Network")
-  print(("  Directory: %s"):format(tostring(net and net.config.directory_channel or "offline")))
-  print(("  Node: %s"):format(tostring(net and net.config.node_channel or "offline")))
-  print(("  Nodes: %s"):format(tostring(net and count(net.listNodes()) or 0)))
+  pushLine(lines, "")
+  pushLine(lines, "Enter: shell   R: refresh")
 
-  print("")
-  print("System")
-  print(("  Tasks: %s"):format(tostring(tasks and count(tasks.list()) or 0)))
-  print(("  Sessions: %s"):format(tostring(auth and count(auth.listSessions()) or 0)))
-  print("")
-  print("Press Enter to open the admin shell.")
-  print("Press R to refresh this dashboard.")
+  local start = math.max(1, #lines - height + 1)
+  for lineIndex = start, #lines do
+    local text = lines[lineIndex]
+    if #text > width then
+      text = text:sub(1, width)
+    end
+    print(text)
+  end
 end
 
 local app = define({

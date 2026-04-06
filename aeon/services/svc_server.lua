@@ -35,7 +35,8 @@ local service = define({
       local payload = event[2]
       respond(payload, {
         ok = true,
-        hostname = context.config.hostname,
+        hostname = context.runtime.hostname or context.config.hostname,
+        node_id = context.runtime.node_id,
         role = context.role.role or "server",
         capabilities = serviceCapabilities(),
       })
@@ -48,7 +49,8 @@ local service = define({
 
       respond(payload, {
         ok = true,
-        hostname = context.config.hostname,
+        hostname = context.runtime.hostname or context.config.hostname,
+        node_id = context.runtime.node_id,
         role = context.role.role or "server",
         services = context.services.list(),
         capabilities = serviceCapabilities(),
@@ -90,7 +92,8 @@ local service = define({
         local taskList = tasks and tasks.list() or {}
         local authSessions = auth and auth.listSessions() or {}
         return {
-          hostname = context.config.hostname,
+          hostname = context.runtime.hostname or context.config.hostname,
+          node_id = context.runtime.node_id,
           role = context.role.role or "server",
           tasks = #taskList,
           sessions = #authSessions,

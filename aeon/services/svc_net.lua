@@ -15,7 +15,7 @@ end
 local function buildMessage(runtime, config, messageType, action, data, target, replyTo)
   return {
     id = makeMessageId(),
-    from = runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID()),
+    from = runtime.node_id or runtime.hostname or runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID()),
     from_channel = config.node_channel,
     to = target or config.server or "server-core",
     type = messageType or "request",
@@ -45,7 +45,8 @@ local service = define({
     local modem = modemDriver.detect(context.registry, {
       preferWireless = true,
     })
-    local hostname = context.runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID())
+    local hostname = context.runtime.hostname or context.runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID())
+    local nodeId = context.runtime.node_id or hostname
     local pending = {}
     local nodes = {}
 
@@ -57,6 +58,7 @@ local service = define({
       local nodeId = payload.from or "unknown"
       nodes[nodeId] = {
         id = nodeId,
+        hostname = payload.data and payload.data.hostname or nodeId,
         role = payload.data and payload.data.role or "unknown",
         capabilities = payload.data and payload.data.capabilities or {},
         last_seen = nowUtc(),
@@ -122,6 +124,7 @@ local service = define({
         "node.hello",
         {
           hostname = hostname,
+          node_id = nodeId,
           role = context.role.role or "workstation",
           capabilities = { "auth", "tasks", "net" },
           directory_channel = networkCfg.directory_channel,
@@ -160,11 +163,11 @@ local service = define({
       end
 
       if type(payload) == "table" and payload.id and payload.action then
-        if payload.from == hostname then
+        if payload.from == nodeId then
           return
         end
 
-        if payload.to and payload.to ~= "*" and payload.to ~= hostname then
+        if payload.to and payload.to ~= "*" and payload.to ~= hostname and payload.to ~= nodeId then
           return
         end
 
@@ -271,6 +274,7 @@ local service = define({
       modem = modem,
       config = networkCfg,
       hostname = hostname,
+      nodeId = nodeId,
       isWireless = modemDriver.isWireless(modem),
       envelope = function(action, data, target, messageType, replyTo)
         return buildMessage(context.runtime, networkCfg, messageType or "request", action, data, target, replyTo)

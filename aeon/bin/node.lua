@@ -17,10 +17,10 @@ function command.run(context, args)
     end
 
     for _, node in ipairs(nodes) do
-      print(("%-16s %-12s last=%s"):format(
+      print(("%-16s %-12s host=%s"):format(
         node.id,
         tostring(node.role or "unknown"),
-        tostring(node.last_seen)
+        tostring(node.hostname or "?")
       ))
     end
     return
@@ -51,6 +51,7 @@ function command.run(context, args)
     end
 
     print(("id: %s"):format(node.id))
+    print(("hostname: %s"):format(tostring(node.hostname)))
     print(("role: %s"):format(tostring(node.role)))
     print(("last_seen: %s"):format(tostring(node.last_seen)))
     print(("distance: %s"):format(tostring(node.distance)))
