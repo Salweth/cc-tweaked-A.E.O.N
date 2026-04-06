@@ -1,13 +1,16 @@
 # AEON OS for CC:Tweaked
 
-This workspace contains the initial AEON OS scaffold for a CC:Tweaked setup.
+This workspace contains AEON OS, a modular event-driven operating environment for CC:Tweaked terminals, servers, and field devices.
 
-Current V1 goals:
-- bootstrapping
-- role-aware startup
-- logging
-- peripheral registry
-- minimal shell
+Current runtime capabilities:
+- event-driven kernel with cooperative tasks
+- role-aware boot and startup app selection
+- service lifecycle management
+- central peripheral registry
+- local auth sessions with clearance and role helpers
+- task introspection service
+- AEON message envelope for future multi-node RPC
+- install/update workflow via GitHub raw files
 
 Target in-game layout:
 
@@ -55,3 +58,14 @@ This includes:
 - service contract
 - app contract
 - global vs private AEON events
+
+## Current Runtime
+
+Version `0.4.x` focuses on solidifying the system layer before business features.
+
+Main services currently available:
+- `log`
+- `registry`
+- `auth`
+- `tasks`
+- `net`

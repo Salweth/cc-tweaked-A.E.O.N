@@ -4,6 +4,7 @@ local kernel = {
   listeners = {},
   nextTaskId = 0,
   running = false,
+  currentTask = nil,
 }
 
 local function packEvent(...)
@@ -27,10 +28,13 @@ local function resumeTask(task, event)
   local filterOrError
 
   if event then
+    kernel.currentTask = task
     ok, filterOrError = coroutine.resume(task.co, unpackEvent(event))
   else
+    kernel.currentTask = task
     ok, filterOrError = coroutine.resume(task.co)
   end
+  kernel.currentTask = nil
 
   if not ok then
     task.status = "error"
@@ -66,10 +70,12 @@ function kernel.init(runtime)
   kernel.listeners = {}
   kernel.nextTaskId = 0
   kernel.running = false
+  kernel.currentTask = nil
 end
 
-function kernel.createTask(name, fn)
+function kernel.createTask(name, fn, options)
   kernel.nextTaskId = kernel.nextTaskId + 1
+  options = options or {}
 
   local task = {
     id = kernel.nextTaskId,
@@ -78,6 +84,8 @@ function kernel.createTask(name, fn)
     filter = nil,
     status = "ready",
     error = nil,
+    owner = options.owner or name or ("task-" .. kernel.nextTaskId),
+    kind = options.kind or "background",
   }
 
   table.insert(kernel.tasks, task)
@@ -85,10 +93,10 @@ function kernel.createTask(name, fn)
   return task.id
 end
 
-function kernel.spawn(name, fn)
+function kernel.spawn(name, fn, options)
   return kernel.createTask(name, function()
     fn(kernel.runtime)
-  end)
+  end, options)
 end
 
 function kernel.on(eventName, handler)
@@ -144,10 +152,16 @@ function kernel.listTasks()
       name = task.name,
       status = task.status,
       filter = task.filter,
+      owner = task.owner,
+      kind = task.kind,
     })
   end
 
   return items
+end
+
+function kernel.getCurrentTask()
+  return kernel.currentTask
 end
 
 return kernel

@@ -1,5 +1,5 @@
 return {
-  version = "0.3.0",
+  version = "0.4.0",
   channel = "main",
   files = {
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
@@ -8,6 +8,7 @@ return {
     { path = "/aeon/core/config.lua", source = "aeon/core/config.lua", mode = "replace" },
     { path = "/aeon/core/events.lua", source = "aeon/core/events.lua", mode = "replace" },
     { path = "/aeon/core/service_contract.lua", source = "aeon/core/service_contract.lua", mode = "replace" },
+    { path = "/aeon/core/permissions.lua", source = "aeon/core/permissions.lua", mode = "replace" },
     { path = "/aeon/core/app.lua", source = "aeon/core/app.lua", mode = "replace" },
     { path = "/aeon/core/kernel.lua", source = "aeon/core/kernel.lua", mode = "replace" },
     { path = "/aeon/core/logger.lua", source = "aeon/core/logger.lua", mode = "replace" },
@@ -18,6 +19,7 @@ return {
     { path = "/aeon/services/svc_log.lua", source = "aeon/services/svc_log.lua", mode = "replace" },
     { path = "/aeon/services/svc_registry.lua", source = "aeon/services/svc_registry.lua", mode = "replace" },
     { path = "/aeon/services/svc_auth.lua", source = "aeon/services/svc_auth.lua", mode = "replace" },
+    { path = "/aeon/services/svc_tasks.lua", source = "aeon/services/svc_tasks.lua", mode = "replace" },
     { path = "/aeon/services/svc_net.lua", source = "aeon/services/svc_net.lua", mode = "replace" },
     { path = "/aeon/drivers/display.lua", source = "aeon/drivers/display.lua", mode = "replace" },
     { path = "/aeon/drivers/modem.lua", source = "aeon/drivers/modem.lua", mode = "replace" },
@@ -25,6 +27,7 @@ return {
     { path = "/aeon/bin/clear.lua", source = "aeon/bin/clear.lua", mode = "replace" },
     { path = "/aeon/bin/ls.lua", source = "aeon/bin/ls.lua", mode = "replace" },
     { path = "/aeon/bin/cat.lua", source = "aeon/bin/cat.lua", mode = "replace" },
+    { path = "/aeon/bin/auth.lua", source = "aeon/bin/auth.lua", mode = "replace" },
     { path = "/aeon/bin/ps.lua", source = "aeon/bin/ps.lua", mode = "replace" },
     { path = "/aeon/bin/devices.lua", source = "aeon/bin/devices.lua", mode = "replace" },
     { path = "/aeon/bin/role.lua", source = "aeon/bin/role.lua", mode = "replace" },
@@ -32,6 +35,7 @@ return {
     { path = "/aeon/bin/reboot.lua", source = "aeon/bin/reboot.lua", mode = "replace" },
     { path = "/aeon/bin/svc.lua", source = "aeon/bin/svc.lua", mode = "replace" },
     { path = "/aeon/bin/login.lua", source = "aeon/bin/login.lua", mode = "replace" },
+    { path = "/aeon/bin/logout.lua", source = "aeon/bin/logout.lua", mode = "replace" },
     { path = "/aeon/bin/whoami.lua", source = "aeon/bin/whoami.lua", mode = "replace" },
     { path = "/aeon/bin/ping.lua", source = "aeon/bin/ping.lua", mode = "replace" },
     { path = "/aeon/bin/update.lua", source = "aeon/bin/update.lua", mode = "replace" },

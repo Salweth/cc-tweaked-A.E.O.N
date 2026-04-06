@@ -10,6 +10,8 @@ function command.run(context, _args)
   end
 
   print(("%s [clearance %s]"):format(user.username, tostring(user.clearance)))
+  print(("roles: %s"):format(table.concat(user.roles or {}, ", ")))
+  print(("task: %s"):format(tostring(user.task_id)))
 end
 
 return command

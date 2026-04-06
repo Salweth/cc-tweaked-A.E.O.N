@@ -54,10 +54,14 @@ function bootstrap.run()
   services.register("log", loadModule("/aeon/services/svc_log.lua"))
   services.register("registry", loadModule("/aeon/services/svc_registry.lua"))
   services.register("auth", loadModule("/aeon/services/svc_auth.lua"))
+  services.register("tasks", loadModule("/aeon/services/svc_tasks.lua"))
   services.register("net", loadModule("/aeon/services/svc_net.lua"))
   services.startEssential()
 
-  kernel.spawn("app:" .. startupAppName, startupApp.run)
+  kernel.spawn("app:" .. startupAppName, startupApp.run, {
+    owner = startupAppName,
+    kind = "app",
+  })
   kernel.run()
 end
 
