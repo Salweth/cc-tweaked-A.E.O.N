@@ -216,6 +216,30 @@ local function runHook(path, context)
   return true
 end
 
+local function findDriveForMount(mountPath)
+  local normalized = normalizeMount(mountPath)
+
+  if not disk or type(disk.getMountPath) ~= "function" then
+    return nil
+  end
+
+  for _, name in ipairs(peripheral.getNames()) do
+    if peripheral.getType(name) == "drive" and disk.isPresent(name) and disk.hasData(name) then
+      local driveMount = disk.getMountPath(name)
+      if driveMount and ("/" .. driveMount) == normalized then
+        return name
+      end
+    end
+  end
+
+  return nil
+end
+
+local function makeDiskLabel(manifest)
+  local name = manifest.name or manifest.id or "Package"
+  return ("Floppy Disk - %s v%s"):format(name, tostring(manifest.version or "unknown"))
+end
+
 function packageCore.loadDb()
   local db = readTable(DB_PATH, { installed = {} })
   db.installed = db.installed or {}
@@ -316,6 +340,14 @@ function packageCore.writeToDisk(packageId, mountPath)
   local ok, copyErr = copyTree(packageRoot, targetRoot)
   if not ok then
     return false, copyErr
+  end
+
+  local driveName = findDriveForMount(mount)
+  if driveName and disk and type(disk.setLabel) == "function" then
+    local labelOk, labelErr = pcall(disk.setLabel, driveName, makeDiskLabel(manifest))
+    if not labelOk then
+      return false, labelErr
+    end
   end
 
   return true, manifest

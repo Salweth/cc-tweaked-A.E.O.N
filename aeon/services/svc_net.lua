@@ -94,13 +94,18 @@ local service = define({
       end
 
       modem.object.transmit(channel, networkCfg.reply_channel or networkCfg.node_channel, message)
-      context.log.info(("net tx %s type=%s to=%s action=%s channel=%s"):format(
+      local line = ("net tx %s type=%s to=%s action=%s channel=%s"):format(
         message.id,
         tostring(message.type),
         tostring(message.to),
         tostring(message.action),
         tostring(channel)
-      ))
+      )
+      if message.action == "node.hello" or message.action == "node.discover" then
+        context.log.debug(line)
+      else
+        context.log.info(line)
+      end
       return true, message
     end
 
@@ -163,16 +168,19 @@ local service = define({
           return
         end
 
-        context.log.info(
-          ("net rx %s type=%s from=%s action=%s side=%s channel=%s"):format(
-            tostring(payload.id),
-            tostring(payload.type),
-            tostring(payload.from),
-            tostring(payload.action),
-            tostring(side),
-            tostring(channel)
-          )
+        local line = ("net rx %s type=%s from=%s action=%s side=%s channel=%s"):format(
+          tostring(payload.id),
+          tostring(payload.type),
+          tostring(payload.from),
+          tostring(payload.action),
+          tostring(side),
+          tostring(channel)
         )
+        if payload.action == "node.hello" or payload.action == "node.discover" then
+          context.log.debug(line)
+        else
+          context.log.info(line)
+        end
 
         local meta = {
           side = side,
