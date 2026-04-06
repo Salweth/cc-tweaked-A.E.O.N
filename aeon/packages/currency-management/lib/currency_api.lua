@@ -6,7 +6,7 @@ local function loadConfig()
   end
 
   return {
-    server = "server-core",
+    server = nil,
   }
 end
 
@@ -24,6 +24,35 @@ local function currentActor(runtime)
   return session and session.username or nil
 end
 
+local function resolveTarget(runtime, net, cfg)
+  local candidates = {}
+
+  if cfg.server and cfg.server ~= "" then
+    table.insert(candidates, cfg.server)
+  end
+
+  if net.config and net.config.server and net.config.server ~= "" then
+    table.insert(candidates, net.config.server)
+  end
+
+  for _, nodeId in ipairs(candidates) do
+    if net.getNode and net.getNode(nodeId) then
+      return nodeId
+    end
+  end
+
+  if net.listNodes then
+    local nodes = net.listNodes()
+    for _, node in ipairs(nodes) do
+      if node.role == "server" then
+        return node.id
+      end
+    end
+  end
+
+  return "*"
+end
+
 local function invokeRemote(runtime, action, data)
   local net = runtime.services.get("net")
   if not net then
@@ -31,7 +60,8 @@ local function invokeRemote(runtime, action, data)
   end
 
   local cfg = loadConfig()
-  local ok, requestId = net.request(action, data or {}, cfg.server or "server-core")
+  local target = resolveTarget(runtime, net, cfg)
+  local ok, requestId = net.request(action, data or {}, target)
   if not ok then
     return failure("REQUEST_FAILED", tostring(requestId))
   end

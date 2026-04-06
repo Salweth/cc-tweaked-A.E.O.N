@@ -1,7 +1,7 @@
 return {
   id = "currency-management",
   name = "Currency Management",
-  version = "1.1.0",
+  version = "1.1.1",
   description = "Balance, transfers and account access",
   author = "AEON",
   issuer = "server-core",
