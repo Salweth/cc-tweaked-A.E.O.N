@@ -1,5 +1,5 @@
 return {
-  version = "0.9.1",
+  version = "1.0.0",
   channel = "main",
   profile = "workstation",
   files = {
@@ -25,6 +25,7 @@ return {
     { path = "/aeon/services/svc_net.lua", source = "aeon/services/svc_net.lua", mode = "replace" },
     { path = "/aeon/drivers/display.lua", source = "aeon/drivers/display.lua", mode = "replace" },
     { path = "/aeon/drivers/modem.lua", source = "aeon/drivers/modem.lua", mode = "replace" },
+    { path = "/aeon/drivers/currency.lua", source = "aeon/drivers/currency.lua", mode = "replace" },
     { path = "/aeon/bin/help.lua", source = "aeon/bin/help.lua", mode = "replace" },
     { path = "/aeon/bin/clear.lua", source = "aeon/bin/clear.lua", mode = "replace" },
     { path = "/aeon/bin/ls.lua", source = "aeon/bin/ls.lua", mode = "replace" },

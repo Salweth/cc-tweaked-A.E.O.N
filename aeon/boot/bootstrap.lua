@@ -1,4 +1,5 @@
 local bootstrap = {}
+local packageCore = nil
 
 local function loadModule(path)
   local ok, result = pcall(dofile, path)
@@ -51,6 +52,7 @@ function bootstrap.run()
   logger.init({
     label = "AEON",
     level = runtime.config.log_level or "info",
+    console_level = runtime.config.console_log_level or "warn",
     path = "/aeon/var/log/system.log",
   })
 
@@ -61,6 +63,7 @@ function bootstrap.run()
   runtime.logger = logger
   runtime.registry = registry
   runtime.services = services
+  packageCore = packageCore or loadModule("/aeon/core/package.lua")
 
   logger.info(
     ("machine profile loaded: role=%s hostname=%s"):format(
@@ -81,7 +84,24 @@ function bootstrap.run()
     services.register("server", loadModule("/aeon/services/svc_server.lua"))
   end
 
+  for _, packageEntry in ipairs(packageCore.listInstalled()) do
+    local entrypoints = packageEntry.entrypoints or {}
+    for _, serviceName in ipairs(entrypoints.services or {}) do
+      local path = ("/aeon/services/%s.lua"):format(serviceName)
+      if fs.exists(path) then
+        services.register(serviceName, loadModule(path))
+      end
+    end
+  end
+
   services.startEssential()
+
+  for _, packageEntry in ipairs(packageCore.listInstalled()) do
+    local entrypoints = packageEntry.entrypoints or {}
+    for _, serviceName in ipairs(entrypoints.services or {}) do
+      services.start(serviceName)
+    end
+  end
 
   kernel.spawn("app:" .. startupAppName, startupApp.run, {
     owner = startupAppName,

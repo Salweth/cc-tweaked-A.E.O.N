@@ -1,5 +1,5 @@
 return {
-  version = "0.9.1",
+  version = "1.0.0",
   profile = "server",
   channel = "main",
   files = {
@@ -26,6 +26,7 @@ return {
     { path = "/aeon/services/svc_server.lua", source = "aeon/services/svc_server.lua", mode = "replace" },
     { path = "/aeon/drivers/display.lua", source = "aeon/drivers/display.lua", mode = "replace" },
     { path = "/aeon/drivers/modem.lua", source = "aeon/drivers/modem.lua", mode = "replace" },
+    { path = "/aeon/drivers/currency.lua", source = "aeon/drivers/currency.lua", mode = "replace" },
     { path = "/aeon/bin/help.lua", source = "aeon/bin/help.lua", mode = "replace" },
     { path = "/aeon/bin/clear.lua", source = "aeon/bin/clear.lua", mode = "replace" },
     { path = "/aeon/bin/ls.lua", source = "aeon/bin/ls.lua", mode = "replace" },
@@ -53,6 +54,10 @@ return {
     { path = "/aeon/packages/currency-management/apps/currency.lua", source = "aeon/packages/currency-management/apps/currency.lua", mode = "replace" },
     { path = "/aeon/packages/currency-management/bin/balance.lua", source = "aeon/packages/currency-management/bin/balance.lua", mode = "replace" },
     { path = "/aeon/packages/currency-management/bin/transfer.lua", source = "aeon/packages/currency-management/bin/transfer.lua", mode = "replace" },
+    { path = "/aeon/packages/currency-management/bin/account.lua", source = "aeon/packages/currency-management/bin/account.lua", mode = "replace" },
+    { path = "/aeon/packages/currency-management/bin/ledger.lua", source = "aeon/packages/currency-management/bin/ledger.lua", mode = "replace" },
+    { path = "/aeon/packages/currency-management/etc/currency.cfg", source = "aeon/packages/currency-management/etc/currency.cfg", mode = "replace" },
+    { path = "/aeon/packages/currency-management/lib/currency_api.lua", source = "aeon/packages/currency-management/lib/currency_api.lua", mode = "replace" },
     { path = "/aeon/packages/currency-management/services/svc_currency.lua", source = "aeon/packages/currency-management/services/svc_currency.lua", mode = "replace" },
     { path = "/aeon/etc/aeon.cfg", source = "aeon/etc/aeon.cfg", mode = "keep" },
     { path = "/aeon/etc/users.cfg", source = "aeon/etc/users.cfg", mode = "keep" },

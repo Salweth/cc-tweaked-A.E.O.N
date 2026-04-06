@@ -63,7 +63,7 @@ function command.run(context, args)
     return
   end
 
-  if mode == "remove" then
+  if mode == "remove" or mode == "uninstall" then
     local id = args[2]
     if not id then
       print("usage: app remove <id>")
@@ -80,7 +80,7 @@ function command.run(context, args)
     return
   end
 
-  print("usage: app [list|info <id>|install [disk]|remove <id>]")
+  print("usage: app [list|info <id>|install [disk]|remove <id>|uninstall <id>]")
 end
 
 return command

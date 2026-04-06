@@ -11,6 +11,7 @@ Current runtime capabilities:
 - task introspection service
 - AEON multi-node discovery and request/response transport over wireless modems
 - server-core dashboard and remote node handlers
+- currency peripheral driver scaffold with CCLC card reader compatibility
 - install/update workflow via GitHub raw files
 
 Target in-game layout:

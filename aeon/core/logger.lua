@@ -3,6 +3,7 @@ local logger = {
     initialized = false,
     label = "LOG",
     level = "info",
+    console_level = "warn",
     path = nil,
   }
 }
@@ -53,7 +54,10 @@ local function emit(level, message)
 
   local line = ("[%s] [%s] [%s] %s"):format(now(), logger.state.label, string.upper(level), tostring(message))
 
-  print(line)
+  local consoleLevel = LEVELS[logger.state.console_level] or LEVELS.warn
+  if incoming >= consoleLevel then
+    print(line)
+  end
 
   if logger.state.path then
     append(logger.state.path, line)
@@ -64,6 +68,7 @@ function logger.init(options)
   logger.state.initialized = true
   logger.state.label = options.label or logger.state.label
   logger.state.level = options.level or logger.state.level
+  logger.state.console_level = options.console_level or logger.state.console_level
   logger.state.path = options.path or logger.state.path
 end
 

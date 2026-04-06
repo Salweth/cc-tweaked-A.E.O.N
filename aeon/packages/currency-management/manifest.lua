@@ -17,11 +17,15 @@ return {
     { from = "apps/currency.lua", to = "/aeon/apps/currency.lua" },
     { from = "bin/balance.lua", to = "/aeon/bin/balance.lua" },
     { from = "bin/transfer.lua", to = "/aeon/bin/transfer.lua" },
+    { from = "bin/account.lua", to = "/aeon/bin/account.lua" },
+    { from = "bin/ledger.lua", to = "/aeon/bin/ledger.lua" },
     { from = "services/svc_currency.lua", to = "/aeon/services/svc_currency.lua" },
+    { from = "etc/currency.cfg", to = "/aeon/etc/currency.cfg" },
+    { from = "lib/currency_api.lua", to = "/aeon/lib/currency_api.lua" },
   },
   entrypoints = {
     apps = { "currency" },
-    commands = { "balance", "transfer" },
+    commands = { "balance", "transfer", "account", "ledger" },
     services = { "svc_currency" },
   },
   dependencies = {
