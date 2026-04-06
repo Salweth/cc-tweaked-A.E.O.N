@@ -1,5 +1,5 @@
 return {
-  version = "0.4.0",
+  version = "0.5.0",
   channel = "main",
   files = {
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
@@ -28,6 +28,8 @@ return {
     { path = "/aeon/bin/ls.lua", source = "aeon/bin/ls.lua", mode = "replace" },
     { path = "/aeon/bin/cat.lua", source = "aeon/bin/cat.lua", mode = "replace" },
     { path = "/aeon/bin/auth.lua", source = "aeon/bin/auth.lua", mode = "replace" },
+    { path = "/aeon/bin/net.lua", source = "aeon/bin/net.lua", mode = "replace" },
+    { path = "/aeon/bin/node.lua", source = "aeon/bin/node.lua", mode = "replace" },
     { path = "/aeon/bin/ps.lua", source = "aeon/bin/ps.lua", mode = "replace" },
     { path = "/aeon/bin/devices.lua", source = "aeon/bin/devices.lua", mode = "replace" },
     { path = "/aeon/bin/role.lua", source = "aeon/bin/role.lua", mode = "replace" },
@@ -36,6 +38,7 @@ return {
     { path = "/aeon/bin/svc.lua", source = "aeon/bin/svc.lua", mode = "replace" },
     { path = "/aeon/bin/login.lua", source = "aeon/bin/login.lua", mode = "replace" },
     { path = "/aeon/bin/logout.lua", source = "aeon/bin/logout.lua", mode = "replace" },
+    { path = "/aeon/bin/send.lua", source = "aeon/bin/send.lua", mode = "replace" },
     { path = "/aeon/bin/whoami.lua", source = "aeon/bin/whoami.lua", mode = "replace" },
     { path = "/aeon/bin/ping.lua", source = "aeon/bin/ping.lua", mode = "replace" },
     { path = "/aeon/bin/update.lua", source = "aeon/bin/update.lua", mode = "replace" },

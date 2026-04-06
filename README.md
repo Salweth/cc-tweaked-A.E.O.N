@@ -9,7 +9,7 @@ Current runtime capabilities:
 - central peripheral registry
 - local auth sessions with clearance and role helpers
 - task introspection service
-- AEON message envelope for future multi-node RPC
+- AEON multi-node discovery and request/response transport
 - install/update workflow via GitHub raw files
 
 Target in-game layout:
@@ -61,7 +61,7 @@ This includes:
 
 ## Current Runtime
 
-Version `0.4.x` focuses on solidifying the system layer before business features.
+Version `0.5.x` focuses on solidifying the system layer before business features.
 
 Main services currently available:
 - `log`
@@ -69,3 +69,9 @@ Main services currently available:
 - `auth`
 - `tasks`
 - `net`
+
+Server-oriented commands available:
+- `net`
+- `node`
+- `send`
+- `ping`
