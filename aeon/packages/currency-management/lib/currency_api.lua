@@ -48,18 +48,17 @@ local function invokeRemote(runtime, action, data)
   return response.data or failure("EMPTY_RESPONSE", "No data returned.")
 end
 
-function api.balance(runtime, accountId)
+function api.balance(runtime)
   return invokeRemote(runtime, "currency.balance", {
-    account_id = accountId,
     actor = currentActor(runtime),
   })
 end
 
 function api.transfer(runtime, targetId, amount, reason)
   return invokeRemote(runtime, "currency.transfer", {
+    actor = currentActor(runtime),
     target_id = targetId,
     amount = amount,
-    actor = currentActor(runtime),
     reason = reason,
   })
 end
@@ -70,26 +69,10 @@ function api.accounts(runtime)
   })
 end
 
-function api.createAccount(runtime, accountId, name)
-  return invokeRemote(runtime, "currency.account.create", {
-    actor = currentActor(runtime),
-    account_id = accountId,
-    name = name,
-  })
-end
-
-function api.lockAccount(runtime, accountId, locked)
-  return invokeRemote(runtime, "currency.account.lock", {
-    actor = currentActor(runtime),
-    account_id = accountId,
-    locked = locked,
-  })
-end
-
-function api.ledger(runtime, accountId)
+function api.ledger(runtime, targetId)
   return invokeRemote(runtime, "currency.ledger", {
     actor = currentActor(runtime),
-    account_id = accountId,
+    account_id = targetId,
   })
 end
 

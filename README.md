@@ -89,6 +89,8 @@ Current V1 commands:
 - workstation: `app list`, `app info <id>`, `app install disk`, `app remove <id>`
 - server: `package list`, `package inspect disk`, `package write <id> disk`
 
+`currency-management` now targets CCLC Trade Link operations instead of fake local accounts. It uses the Trade Link as the source of truth and keeps only an AEON audit log on the server.
+
 ## Architecture
 
 Runtime contracts are documented in `ARCHITECTURE.md`.

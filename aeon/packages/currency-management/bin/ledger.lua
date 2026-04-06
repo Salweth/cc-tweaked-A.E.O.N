@@ -11,8 +11,8 @@ function command.run(context, args)
 
   for _, item in ipairs(result.data.transactions or {}) do
     print(("%s -> %s : %s [%s]"):format(
-      tostring(item.from),
-      tostring(item.to),
+      tostring(item.actor),
+      tostring(item.target_id),
       tostring(item.amount),
       tostring(item.reason or "no reason")
     ))

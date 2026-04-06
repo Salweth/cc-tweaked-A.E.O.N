@@ -4,6 +4,10 @@ local COMMAND_PATHS = {
   "/aeon/bin/%s.lua",
 }
 
+local APP_PATHS = {
+  "/aeon/apps/%s.lua",
+}
+
 local function split(input)
   local parts = {}
   for token in string.gmatch(input, "%S+") do
@@ -12,8 +16,8 @@ local function split(input)
   return parts
 end
 
-local function resolveCommand(name)
-  for _, pattern in ipairs(COMMAND_PATHS) do
+local function resolve(paths, name)
+  for _, pattern in ipairs(paths) do
     local path = pattern:format(name)
     if fs.exists(path) then
       return path
@@ -24,7 +28,7 @@ local function resolveCommand(name)
 end
 
 local function loadCommand(name)
-  local path = resolveCommand(name)
+  local path = resolve(COMMAND_PATHS, name)
   if not path then
     return nil, ("unknown command: %s"):format(name)
   end
@@ -39,6 +43,24 @@ local function loadCommand(name)
   end
 
   return command
+end
+
+local function loadApp(name)
+  local path = resolve(APP_PATHS, name)
+  if not path then
+    return nil
+  end
+
+  local ok, app = pcall(dofile, path)
+  if not ok then
+    return nil, ("failed to load app %s: %s"):format(name, tostring(app))
+  end
+
+  if type(app) ~= "table" or type(app.run) ~= "function" then
+    return nil, ("invalid app module: %s"):format(name)
+  end
+
+  return app
 end
 
 local function makeContext(runtime)
@@ -77,13 +99,23 @@ function shellApp.run(runtime)
       table.remove(parts, 1)
       local command, err = loadCommand(name)
 
-      if not command then
-        print(err)
-      else
+      if command then
         local ok, cmdErr = pcall(command.run, context, parts)
         if not ok then
           context.logger.error(cmdErr)
           print(("command failed: %s"):format(tostring(cmdErr)))
+        end
+      else
+        local app, appErr = loadApp(name)
+        if not app then
+          print(err or appErr or ("unknown command: %s"):format(name))
+        else
+          local ok, runErr = pcall(app.run, runtime)
+          if not ok then
+            context.logger.error(runErr)
+            print(("app failed: %s"):format(tostring(runErr)))
+          end
+          drawBanner(context)
         end
       end
     end
