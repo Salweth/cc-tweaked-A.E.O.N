@@ -1,0 +1,8 @@
+local command = {}
+
+function command.run()
+  term.clear()
+  term.setCursorPos(1, 1)
+end
+
+return command
