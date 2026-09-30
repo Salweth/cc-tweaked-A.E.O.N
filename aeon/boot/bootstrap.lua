@@ -38,6 +38,7 @@ function bootstrap.run()
   local kernel = loadModule("/aeon/core/kernel.lua")
   local logger = loadModule("/aeon/core/logger.lua")
   local registry = loadModule("/aeon/core/registry.lua")
+  local devices = loadModule("/aeon/core/devices.lua")
   local services = loadModule("/aeon/core/service.lua")
   local systemConfig = config.load("/aeon/etc/aeon.cfg")
   local roleConfig = config.load("/aeon/etc/role.cfg")
@@ -68,6 +69,11 @@ function bootstrap.run()
   runtime.kernel = kernel
   runtime.logger = logger
   runtime.registry = registry
+  runtime.devices = devices.create(registry, {
+    logger = logger,
+    queueEvent = os.queueEvent,
+    drivers = systemConfig.device_drivers,
+  })
   runtime.services = services
   packageCore = packageCore or loadModule("/aeon/core/package.lua")
 

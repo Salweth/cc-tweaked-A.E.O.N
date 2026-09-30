@@ -69,6 +69,7 @@ local function makeContext(runtime)
     config = runtime.config,
     logger = runtime.logger,
     registry = runtime.registry,
+    devices = runtime.devices,
     role = runtime.role,
     hostname = runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID()),
   }
