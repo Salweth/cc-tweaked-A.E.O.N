@@ -1,5 +1,14 @@
 local command = {}
 
+local function readConfig(path)
+  if not fs.exists(path) then return {} end
+  local ok, value = pcall(dofile, path)
+  if not ok or type(value) ~= "table" then
+    return nil, "invalid config: " .. path
+  end
+  return value
+end
+
 function command.run(_context, args)
   local branch = args[1]
 
@@ -8,14 +17,13 @@ function command.run(_context, args)
     return
   end
 
-  local cfg = {}
-  if fs.exists("/aeon/etc/update.cfg") then
-    cfg = dofile("/aeon/etc/update.cfg")
-  end
+  local cfg, cfgErr = readConfig("/aeon/etc/update.cfg")
+  if not cfg then print(cfgErr); return end
 
   local roleName = "workstation"
   if fs.exists("/aeon/etc/role.cfg") then
-    local roleCfg = dofile("/aeon/etc/role.cfg")
+    local roleCfg, roleErr = readConfig("/aeon/etc/role.cfg")
+    if not roleCfg then print(roleErr); return end
     roleName = roleCfg.role or roleName
   end
 
@@ -23,8 +31,8 @@ function command.run(_context, args)
   local repo = cfg.repo or "cc-tweaked-A.E.O.N"
   local selectedBranch = branch or cfg.branch or "main"
   local installer = cfg.installer
-  if not installer or installer == "" then
-    if roleName == "server" then
+  if not installer or installer == "" or installer == "installer.lua" then
+    if (cfg.profile or roleName) == "server" then
       installer = "installer-server.lua"
     else
       installer = "installer-workstation.lua"
@@ -49,7 +57,7 @@ function command.run(_context, args)
     return
   end
 
-  local ok, runErr = pcall(fn, selectedBranch)
+  local ok, runErr = pcall(fn, selectedBranch, { owner = owner, repo = repo })
   if not ok then
     print(("update failed: %s"):format(tostring(runErr)))
     return

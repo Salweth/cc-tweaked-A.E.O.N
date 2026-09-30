@@ -7,16 +7,16 @@ local service = define({
   start = function(context)
     context.log.info("service online")
 
-    context.on("peripheral", function()
-      context.registry.refresh()
+    context.on("peripheral", function(event)
+      context.registry.refresh("attach", event[2])
       context.log.info("registry refreshed after peripheral attach")
-      context.emit(events.global("registry.changed"), "attach")
+      os.queueEvent(events.global("registry.changed"), "attach", event[2])
     end)
 
-    context.on("peripheral_detach", function()
-      context.registry.refresh()
+    context.on("peripheral_detach", function(event)
+      context.registry.refresh("detach", event[2])
       context.log.warn("registry refreshed after peripheral detach")
-      context.emit(events.global("registry.changed"), "detach")
+      os.queueEvent(events.global("registry.changed"), "detach", event[2])
     end)
 
     return {

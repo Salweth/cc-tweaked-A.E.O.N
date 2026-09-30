@@ -3,8 +3,15 @@ local MANIFEST = "manifest-workstation.lua"
 local DEFAULT_ROLE = "workstation"
 local DEFAULT_INSTALLER = "installer-workstation.lua"
 
-local REPO_OWNER = "Salweth"
-local REPO_NAME = "cc-tweaked-A.E.O.N"
+local args = { ... }
+local savedUpdate = {}
+if fs.exists("/aeon/etc/update.cfg") then
+  savedUpdate = dofile("/aeon/etc/update.cfg")
+  if type(savedUpdate) ~= "table" then error("invalid update.cfg", 0) end
+end
+local sourceOptions = args[2] or savedUpdate
+local REPO_OWNER = sourceOptions.owner or "Salweth"
+local REPO_NAME = sourceOptions.repo or "cc-tweaked-A.E.O.N"
 local DEFAULT_BRANCH = "main"
 
 local function joinUrl(base, path)
@@ -61,14 +68,10 @@ local function loadTableFromString(source, chunkName)
 end
 
 local function writeManagedConfig(branch)
-  local updateCfg = ([[return {
-  owner = %q,
-  repo = %q,
-  branch = %q,
-  installer = %q,
-  profile = %q,
-}
-]]):format(REPO_OWNER, REPO_NAME, branch, DEFAULT_INSTALLER, PROFILE)
+  local cfg = savedUpdate
+  cfg.owner, cfg.repo, cfg.branch = REPO_OWNER, REPO_NAME, branch
+  cfg.installer, cfg.profile = DEFAULT_INSTALLER, PROFILE
+  local updateCfg = "return " .. textutils.serialize(cfg) .. "\n"
 
   local roleCfg = ([[return {
   role = %q
@@ -88,7 +91,6 @@ local function writeManagedConfig(branch)
   end
 end
 
-local args = { ... }
 local branch = args[1] or DEFAULT_BRANCH
 local rawBase = ("https://raw.githubusercontent.com/%s/%s/%s"):format(REPO_OWNER, REPO_NAME, branch)
 
@@ -103,8 +105,9 @@ if not manifestBody then
 end
 
 local manifest, parseErr = loadTableFromString(manifestBody, "@" .. MANIFEST)
-if not manifest then
-  error(("invalid manifest: %s"):format(tostring(parseErr)), 0)
+if type(manifest) ~= "table" or type(manifest.files) ~= "table" or #manifest.files == 0
+  or manifest.profile ~= PROFILE then
+  error(("invalid manifest: %s"):format(tostring(parseErr or "expected a non-empty manifest for " .. PROFILE)), 0)
 end
 
 for _, file in ipairs(manifest.files or {}) do

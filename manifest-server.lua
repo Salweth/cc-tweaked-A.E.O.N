@@ -1,8 +1,10 @@
 return {
-  version = "1.0.1",
+  version = "1.1.0",
   profile = "server",
   channel = "main",
   files = {
+    { path = "/aeon/drivers/speaker.lua", source = "aeon/drivers/speaker.lua", mode = "replace" },
+    { path = "/aeon/core/devices.lua", source = "aeon/core/devices.lua", mode = "replace" },
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
     { path = "/aeon/boot/init.lua", source = "aeon/boot/init.lua", mode = "replace" },
     { path = "/aeon/boot/bootstrap.lua", source = "aeon/boot/bootstrap.lua", mode = "replace" },
@@ -56,7 +58,7 @@ return {
     { path = "/aeon/packages/currency-management/bin/transfer.lua", source = "aeon/packages/currency-management/bin/transfer.lua", mode = "replace" },
     { path = "/aeon/packages/currency-management/bin/account.lua", source = "aeon/packages/currency-management/bin/account.lua", mode = "replace" },
     { path = "/aeon/packages/currency-management/bin/ledger.lua", source = "aeon/packages/currency-management/bin/ledger.lua", mode = "replace" },
-    { path = "/aeon/packages/currency-management/etc/currency.cfg", source = "aeon/packages/currency-management/etc/currency.cfg", mode = "replace" },
+    { path = "/aeon/packages/currency-management/etc/currency.cfg", source = "aeon/packages/currency-management/etc/currency.cfg", mode = "keep" },
     { path = "/aeon/packages/currency-management/lib/currency_api.lua", source = "aeon/packages/currency-management/lib/currency_api.lua", mode = "replace" },
     { path = "/aeon/packages/currency-management/services/svc_currency.lua", source = "aeon/packages/currency-management/services/svc_currency.lua", mode = "replace" },
     { path = "/aeon/etc/aeon.cfg", source = "aeon/etc/aeon.cfg", mode = "keep" },

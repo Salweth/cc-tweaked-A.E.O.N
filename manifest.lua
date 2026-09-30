@@ -1,8 +1,10 @@
 return {
-  version = "1.0.0",
+  version = "1.1.0",
   channel = "main",
   profile = "workstation",
   files = {
+    { path = "/aeon/drivers/speaker.lua", source = "aeon/drivers/speaker.lua", mode = "replace" },
+    { path = "/aeon/core/devices.lua", source = "aeon/core/devices.lua", mode = "replace" },
     { path = "/startup.lua", source = "startup.lua", mode = "replace" },
     { path = "/aeon/boot/init.lua", source = "aeon/boot/init.lua", mode = "replace" },
     { path = "/aeon/boot/bootstrap.lua", source = "aeon/boot/bootstrap.lua", mode = "replace" },

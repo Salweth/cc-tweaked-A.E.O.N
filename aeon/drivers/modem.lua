@@ -1,4 +1,13 @@
-local driver = {}
+local driver = { id = "cc.modem" }
+
+function driver.match(entry, helpers)
+  return helpers.hasType(entry, "modem")
+    and helpers.hasMethods(entry, { "open", "close", "isOpen", "transmit", "isWireless" })
+end
+
+function driver.bindCapabilities(entry)
+  return { modem = entry.object }
+end
 
 local function isWireless(device)
   return device

@@ -1,6 +1,5 @@
 local define = dofile("/aeon/core/service_contract.lua").define
 local events = dofile("/aeon/core/events.lua")
-local modemDriver = dofile("/aeon/drivers/modem.lua")
 
 local function makeMessageId()
   local epoch = os.epoch and os.epoch("utc") or math.floor(os.clock() * 1000)
@@ -42,16 +41,41 @@ local service = define({
     networkCfg.reply_channel = networkCfg.reply_channel or networkCfg.node_channel
     networkCfg.address_book = networkCfg.address_book or {}
 
-    local modem = modemDriver.detect(context.registry, {
-      preferWireless = true,
-    })
+    local modem = nil
+    local wireless = false
+    local instance = nil
     local hostname = context.runtime.hostname or context.runtime.config.hostname or os.getComputerLabel() or ("cc-" .. os.getComputerID())
     local nodeId = context.runtime.node_id or hostname
     local pending = {}
     local nodes = {}
 
-    if modem and not modemDriver.isWireless(modem) then
-      context.log.warn("wireless modem not found; AEON network isolation is not guaranteed")
+    local function bindModem()
+      modem, wireless = nil, false
+      local candidates = context.devices.findAllCapabilities("modem")
+      -- Policy belongs here: prefer wireless, but retain the wired fallback.
+      for _, preferWireless in ipairs({ true, false }) do
+        for _, candidate in ipairs(candidates) do
+          local ok, value = candidate.call("isWireless")
+          if ok and value == preferWireless then
+            local opened = candidate.call("open", networkCfg.directory_channel)
+            local nodeOpened = candidate.call("open", networkCfg.node_channel)
+            if opened and nodeOpened then
+              modem, wireless = candidate, value
+              break
+            end
+          end
+        end
+        if modem then break end
+      end
+      if instance then
+        instance.modem = modem and context.registry.get(modem.name) or nil
+        instance.isWireless = wireless
+      end
+      if not modem then
+        context.log.warn("network service started without active modem channel")
+      elseif not wireless then
+        context.log.warn("wireless modem not found; AEON network isolation is not guaranteed")
+      end
     end
 
     local function recordNode(payload, meta)
@@ -86,7 +110,7 @@ local service = define({
     end
 
     local function transmit(message, targetChannel)
-      if not modem or not modem.object or not modem.object.transmit then
+      if not modem then
         return false, "modem unavailable"
       end
 
@@ -95,7 +119,10 @@ local service = define({
         return false, "network channel missing"
       end
 
-      modem.object.transmit(channel, networkCfg.reply_channel or networkCfg.node_channel, message)
+      local ok, err = modem.call("transmit", channel, networkCfg.reply_channel or networkCfg.node_channel, message)
+      if not ok then
+        return false, err
+      end
       local line = ("net tx %s type=%s to=%s action=%s channel=%s"):format(
         message.id,
         tostring(message.type),
@@ -129,26 +156,18 @@ local service = define({
           capabilities = { "auth", "tasks", "net" },
           directory_channel = networkCfg.directory_channel,
           node_channel = networkCfg.node_channel,
-          wireless = modemDriver.isWireless(modem),
+          wireless = wireless,
         },
         target or "*"
       )
       return transmit(message, networkCfg.directory_channel)
     end
 
-    if modem and modem.object and modem.object.open then
-      modem.object.open(networkCfg.directory_channel)
-      if networkCfg.node_channel ~= networkCfg.directory_channel then
-        modem.object.open(networkCfg.node_channel)
-      end
-      context.log.info(("network channels opened: directory=%s node=%s wireless=%s"):format(
-        tostring(networkCfg.directory_channel),
-        tostring(networkCfg.node_channel),
-        tostring(modemDriver.isWireless(modem))
-      ))
-    else
-      context.log.warn("network service started without active modem channel")
-    end
+    bindModem()
+    context.on(events.global("devices.changed"), function()
+      bindModem()
+      sendNodeHello("*")
+    end)
 
     context.on("modem_message", function(event)
       local side = event[2]
@@ -157,7 +176,8 @@ local service = define({
       local payload = event[5]
       local distance = event[6]
 
-      local acceptedChannel = channel == networkCfg.directory_channel or channel == networkCfg.node_channel
+      local acceptedChannel = modem and side == modem.name
+        and (channel == networkCfg.directory_channel or channel == networkCfg.node_channel)
       if not acceptedChannel then
         return
       end
@@ -270,12 +290,12 @@ local service = define({
 
     sendNodeHello("*")
 
-    return {
-      modem = modem,
+    instance = {
+      modem = modem and context.registry.get(modem.name) or nil,
       config = networkCfg,
       hostname = hostname,
       nodeId = nodeId,
-      isWireless = modemDriver.isWireless(modem),
+      isWireless = wireless,
       envelope = function(action, data, target, messageType, replyTo)
         return buildMessage(context.runtime, networkCfg, messageType or "request", action, data, target, replyTo)
       end,
@@ -313,7 +333,7 @@ local service = define({
           role = context.role.role or "workstation",
           directory_channel = networkCfg.directory_channel,
           node_channel = networkCfg.node_channel,
-          wireless = modemDriver.isWireless(modem),
+          wireless = wireless,
         }, "*")
         return transmit(message, networkCfg.directory_channel)
       end,
@@ -356,6 +376,7 @@ local service = define({
         end
       end,
     }
+    return instance
   end,
 })
 
