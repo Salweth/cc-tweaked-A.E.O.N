@@ -9,6 +9,7 @@ local ALLOWED_PREFIXES = {
   "/aeon/services/",
   "/aeon/etc/",
   "/aeon/lib/",
+  "/aeon/drivers/",
 }
 
 local function nowUtc()
@@ -130,6 +131,9 @@ local function validateManifest(manifest, role)
 
     if not isAllowedTarget(entry.to) then
       return false, ("target not allowed: %s"):format(entry.to)
+    end
+    if entry.mode ~= nil and entry.mode ~= "keep" and entry.mode ~= "replace" then
+      return false, "invalid package file mode: " .. tostring(entry.mode)
     end
   end
 
@@ -372,9 +376,11 @@ function packageCore.installFromDisk(role, mountPath)
       return false, ("package file missing: %s"):format(entry.from)
     end
 
-    local copyOk, copyErr = copyFile(source, entry.to)
-    if not copyOk then
-      return false, copyErr
+    if entry.mode ~= "keep" or not fs.exists(entry.to) then
+      local copyOk, copyErr = copyFile(source, entry.to)
+      if not copyOk then
+        return false, copyErr
+      end
     end
 
     table.insert(copiedFiles, entry.to)
@@ -433,9 +439,11 @@ function packageCore.installFromRepo(role, packageId)
       return false, ("package file missing: %s"):format(entry.from)
     end
 
-    local copyOk, copyErr = copyFile(source, entry.to)
-    if not copyOk then
-      return false, copyErr
+    if entry.mode ~= "keep" or not fs.exists(entry.to) then
+      local copyOk, copyErr = copyFile(source, entry.to)
+      if not copyOk then
+        return false, copyErr
+      end
     end
 
     table.insert(copiedFiles, entry.to)

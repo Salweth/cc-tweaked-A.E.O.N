@@ -82,7 +82,7 @@ local service = define({
       respond(payload, {
         ok = true,
         sessions = #authSessions,
-        mode = "local-task-session",
+        mode = "local-surface-session",
       })
     end)
 

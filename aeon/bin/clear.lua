@@ -1,8 +1,7 @@
 local command = {}
 
-function command.run()
-  term.clear()
-  term.setCursorPos(1, 1)
+function command.run(context)
+  context.ui.clear()
 end
 
 return command

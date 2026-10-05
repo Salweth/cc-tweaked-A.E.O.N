@@ -1,5 +1,7 @@
 # AEON OS for CC:Tweaked
 
+**A.E.O.N. — Advanced Ethics & Operations Network**
+
 This workspace contains AEON OS, a modular event-driven operating environment for CC:Tweaked terminals, servers, and field devices.
 
 Current runtime capabilities:
@@ -8,6 +10,8 @@ Current runtime capabilities:
 - service lifecycle management
 - central peripheral registry
 - functional device capabilities with hot-plug discovery and isolated drivers
+- shared character UI/theme for TERMINAL, CORE and compact FIELD surfaces
+- kernel-managed foreground app launches with local surface auth continuity
 - local auth sessions with clearance and role helpers
 - task introspection service
 - AEON multi-node discovery and request/response transport over wireless modems
@@ -181,8 +185,8 @@ This includes:
 
 ## Current Runtime
 
-Distribution version `1.1.0` adds device capabilities while retaining the existing
-runtime, package and workstation/server contracts.
+Distribution version `1.2.0` adds the AEON character interface and consistent app
+launch/auth behavior on top of the device-capability layer.
 
 Main services currently available:
 - `log`
@@ -218,10 +222,77 @@ return {
 
 With the default config, a server node boots into the passive `server` app while workstations keep the interactive `terminal` app.
 
+## Interface and surfaces
+
+The AEON theme uses off-white text on black, muted metadata, cyan headers/accents,
+amber warnings, red errors and restrained green online labels. The core offers
+shared components; each surface chooses its own layout:
+
+- **TERMINAL**: hostname/role/identity/clearance header and a scrollable command
+  region. Auth and network fields come from the running services. Type existing
+  commands as before, or an installed app's name to launch it.
+- **CORE**: server identity, modem availability, peers, live tasks, local sessions,
+  uptime and service states. Enter opens the admin terminal; `exit` or Ctrl-T
+  returns to CORE. R refreshes the dashboard. The server manifest includes the
+  terminal app needed for this path.
+- **FIELD**: Pocket hardware (or the `pocket` role) selects the compact FIELD header.
+  Narrow/short and monochrome displays retain textual status meaning and input
+  space. This is a compact terminal surface, not a separate field app/package.
+
+New installations use `theme = "aeon"`. Kept existing configurations with the old
+unused `theme = "amber"` also resolve to the AEON theme. Colours are centralized
+in `aeon/core/theme.lua`; no hardware palette is changed. The new UI and theme
+modules are present in all root manifests, including the legacy workstation list.
+
+`drivers/display.lua` adapts CC terminal/monitor targets; `core/ui.lua` supplies
+lightweight components and keyboard input. This keeps physical display handling
+out of layouts. No desktop, mouse requirement or GPU dependency is introduced.
+For example, a package app can draw a specialized surface using:
+
+```lua
+local define = dofile("/aeon/core/app.lua").define
+return define({
+  name = "operations",
+  run = function(runtime)
+    local ui = runtime.ui
+    ui.clear()
+    ui.header("OPERATIONS", runtime.hostname)
+    -- Populate labels/status from the package's real service state.
+    ui.wait("key")
+  end,
+})
+```
+
+All app entrypoints, including shell-launched package apps, now go through
+`runtime.apps`. Each is a kernel task; the calling surface waits until it returns.
+The foreground app owns the surface input, with terminal redirects preserved per
+task. Existing CLI `print` output is redirected into the command region for
+compatibility; the shell, CORE, login/clear and currency app use the UI API.
+
+Login belongs to the owning surface's auth scope. Child apps on that surface see
+the same username, roles and clearance; logout applies to all of them. Service
+tasks and separate surfaces do not automatically inherit that login. Ending the
+owning surface removes its session. `auth`, `whoami` and clearance checks retain
+their APIs; the reported session `task_id` identifies the owner of the scope.
+
+Optional packages may deploy drivers under `/aeon/drivers` and declare
+`entrypoints.drivers` for boot-time registration. This supports future AE2,
+Power Grid and BioForge surfaces without adding their business logic to the core.
+The existing currency package provides an example of an app using the shared UI.
+Its deployed app is updated by reinstalling the package after the OS update;
+the updater refreshes the server's package source, not copies already installed
+by the separate package workflow. The currency package now marks its config
+`mode = "keep"`; reinstalls from disk or repository preserve the local config.
+
+See `ARCHITECTURE.md` for the UI/backend contract, monitor capability adapters,
+foreground lifecycle and authentication rules.
+
 ## Verification
 
 Run `lua tests/run.lua` from the repository root with Lua 5.2 or newer. The suite
 uses simulated CC APIs to check capabilities, failed drivers, detach/reattach,
 network recovery, both installation profiles, update persistence, manifests and
-boot from installed files only. No test dependencies are installed on Minecraft
+boot from installed files only. It also checks keyboard editing/masking, monochrome
+themes, resize, terminal isolation, shell/CORE return, app failure/cancellation,
+auth continuity/revocation and installed package-driver activation. No test dependencies are installed on Minecraft
 computers. In-game hardware and mod compatibility still require an in-game check.

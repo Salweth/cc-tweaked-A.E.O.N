@@ -57,12 +57,16 @@ local function emit(level, message)
   local consoleLevel = LEVELS[logger.state.console_level] or LEVELS.warn
   local incoming = LEVELS[level] or LEVELS.info
   if incoming >= consoleLevel then
-    print(line)
+    if logger.state.console_sink then logger.state.console_sink(line) else print(line) end
   end
 
   if logger.state.path then
     append(logger.state.path, line)
   end
+end
+
+function logger.setConsoleSink(sink)
+  logger.state.console_sink = sink
 end
 
 function logger.init(options)
