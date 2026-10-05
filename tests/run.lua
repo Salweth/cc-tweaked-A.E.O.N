@@ -16,7 +16,9 @@ local function serialize(value)
   return "{" .. table.concat(fields, ",") .. "}"
 end
 
-local function fixture()
+local terminalFixture = dofile("tests/terminal.lua")
+
+local function fixture(width, height, color)
   local env = setmetatable({}, { __index = _G })
   local files, hardware, queue, output, requests, modules = {}, {}, {}, {}, {}, {}
   local dirs = { ["/"] = true }
@@ -33,11 +35,7 @@ local function fixture()
   env.print = function(...) output[#output + 1] = table.concat({...}, " ") end
   env.write = function() end
   env.read = function() return coroutine.yield("test:input") end
-  env.colors = { orange = 2, white = 1 }
-  env.keys = { enter = 28 }
-  env.term = setmetatable({ getSize = function() return 51, 19 end }, {
-    __index = function() return function() end end,
-  })
+  local screen, surfaces = terminalFixture(env, output, width, height, color)
   env.textutils = { serialize = serialize, formatTime = function() return "12:00" end }
   env.os = {
     epoch = function() return 1000 end, clock = function() return 1 end,
@@ -51,7 +49,13 @@ local function fixture()
       return "test:done"
     end,
   }
+  env.os.pullEvent = function(filter)
+    local event = table.pack(coroutine.yield(filter))
+    if event[1] == "terminate" then error("Terminated", 0) end
+    return table.unpack(event, 1, event.n)
+  end
   env.fs = {
+    combine = function(a, b) return normalize((a .. "/" .. b):gsub("/+", "/")) end,
     exists = function(path) return files[normalize(path)] ~= nil or dirs[normalize(path)] == true end,
     isDir = function(path) return dirs[normalize(path)] == true end,
     getDir = function(path) return path:match("^(.*)/[^/]+$") or "" end,
@@ -99,7 +103,8 @@ local function fixture()
     end,
   }
   return { env = env, files = files, hardware = hardware, queue = queue,
-    output = output, requests = requests, modules = modules, execute = execute }
+    output = output, requests = requests, modules = modules, execute = execute,
+    screen = screen, surfaces = surfaces }
 end
 
 local function modem(wireless, fail)
@@ -210,8 +215,8 @@ function tests.hotplug_network()
   for _, task in ipairs(kernel.listTasks()) do assert(task.status ~= "error") end
 end
 
-local function install(profile)
-  local f = fixture()
+local function install(profile, width, height, color)
+  local f = fixture(width, height, color)
   f.execute("installer.lua", profile, "test-branch")
   local cfg = f.execute("/aeon/etc/update.cfg")
   assert(cfg.profile == profile and cfg.branch == "test-branch")
@@ -225,7 +230,7 @@ function tests.install_update_boot()
   for _, profile in ipairs({ "workstation", "server" }) do
     local f = install(profile)
     local persistent = {
-      ["/aeon/etc/aeon.cfg"] = 'return { hostname = "local" }',
+      ["/aeon/etc/aeon.cfg"] = 'return { hostname = "local", theme = "amber" }',
       ["/aeon/etc/users.cfg"] = 'return { users = {} }',
       ["/aeon/etc/network.cfg"] = 'return { node_channel = 1234 }',
       ["/aeon/etc/role.cfg"] = 'return { role = "' .. profile .. '", custom = true }',
@@ -253,6 +258,7 @@ function tests.install_update_boot()
     f.execute("/startup.lua")
     local runtime = f.modules["/aeon/core/kernel.lua"].runtime
     assert(runtime.devices and runtime.role.role == profile)
+    assert(runtime.ui.theme.accent == f.env.colors.cyan)
     for _, service in ipairs(runtime.services.list()) do
       assert(service.status == "running", service.name .. " failed on " .. profile)
     end
@@ -328,6 +334,8 @@ function tests.manifests()
     assert(paths["/aeon/core/devices.lua"] and paths["/aeon/drivers/speaker.lua"])
   end
 end
+
+dofile("tests/ui.lua")(tests, fixture, install)
 
 local names = {}
 for name in pairs(tests) do names[#names + 1] = name end

@@ -1,7 +1,7 @@
 return {
   id = "currency-management",
   name = "Currency Management",
-  version = "1.1.1",
+  version = "1.2.0",
   description = "Balance, transfers and account access",
   author = "AEON",
   issuer = "server-core",
@@ -20,7 +20,7 @@ return {
     { from = "bin/account.lua", to = "/aeon/bin/account.lua" },
     { from = "bin/ledger.lua", to = "/aeon/bin/ledger.lua" },
     { from = "services/svc_currency.lua", to = "/aeon/services/svc_currency.lua" },
-    { from = "etc/currency.cfg", to = "/aeon/etc/currency.cfg" },
+    { from = "etc/currency.cfg", to = "/aeon/etc/currency.cfg", mode = "keep" },
     { from = "lib/currency_api.lua", to = "/aeon/lib/currency_api.lua" },
   },
   entrypoints = {

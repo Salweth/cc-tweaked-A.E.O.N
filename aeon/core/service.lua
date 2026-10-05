@@ -13,6 +13,7 @@ local function buildContext(runtime, entry)
     logger = runtime.logger,
     registry = runtime.registry,
     devices = runtime.devices,
+    ui = runtime.ui,
     services = serviceManager,
     config = runtime.config,
     role = runtime.role,

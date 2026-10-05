@@ -41,8 +41,14 @@ local service = define({
       return task and task.id or 0
     end
 
+    local function sessionScope(taskId)
+      local id = taskId or currentTaskId()
+      local task = context.kernel.getTask(id)
+      return task and task.auth_scope or id
+    end
+
     local function getSession(taskId)
-      return sessions[taskId or currentTaskId()]
+      return sessions[sessionScope(taskId)]
     end
 
     local function fail(reason, metadata)
@@ -52,6 +58,15 @@ local service = define({
     end
 
     context.log.info("service online")
+
+    context.on(events.global("task.finished"), function(event)
+      local task = context.kernel.getTask(event[2])
+      if task and task.auth_scope == task.id and sessions[task.id] then
+        local session = sessions[task.id]
+        sessions[task.id] = nil
+        context.emit(events.global("auth.logout"), session)
+      end
+    end)
 
     return {
       login = function(username, password, taskId)
@@ -63,7 +78,7 @@ local service = define({
           })
         end
 
-        local session = snapshotSession(taskId or currentTaskId(), username, user)
+        local session = snapshotSession(sessionScope(taskId), username, user)
         sessions[session.task_id] = session
         context.emit(events.global("auth.login"), session)
         context.log.info(("login success user=%s task=%s"):format(session.username, tostring(session.task_id)))

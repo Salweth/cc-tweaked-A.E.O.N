@@ -3,12 +3,10 @@ local command = {}
 function command.run(context, args)
   local username = args[1]
   if not username then
-    write("username: ")
-    username = read()
+    username = context.ui.read({ prompt = "Username: " })
   end
 
-  write("password: ")
-  local password = read("*")
+  local password = context.ui.read({ prompt = "Password: ", mask = "*" })
 
   local auth = context.runtime.services.get("auth")
   if not auth then

@@ -1,117 +1,83 @@
 local define = dofile("/aeon/core/app.lua").define
-local shell = dofile("/aeon/shell/shell.lua")
 
-local function count(items)
-  return items and #items or 0
-end
-
-local function pushLine(lines, value)
-  table.insert(lines, value)
-end
-
-local function uptimeSeconds(runtime)
-  if not runtime.started_at or not os.epoch then
-    return 0
-  end
-
-  return math.floor((os.epoch("utc") - runtime.started_at) / 1000)
+local function uptime(runtime)
+  if not runtime.started_at or not os.epoch then return "UNKNOWN" end
+  local seconds = math.max(0, math.floor((os.epoch("utc") - runtime.started_at) / 1000))
+  return ("%02d:%02d:%02d"):format(math.floor(seconds / 3600), math.floor(seconds / 60) % 60, seconds % 60)
 end
 
 local function draw(runtime)
-  local services = runtime.services
-  local net = services.get("net")
-  local auth = services.get("auth")
-  local tasks = services.get("tasks")
-  local width, height = term.getSize()
-  local lines = {}
-  local serviceItems = runtime.services.list()
-
-  term.setCursorPos(1, 1)
-  term.clear()
-
-  pushLine(lines, "A.E.O.N SERVER CORE")
-  pushLine(lines, ("Host: %s"):format(runtime.hostname or runtime.config.hostname or "server"))
-  pushLine(lines, ("Node: %s"):format(runtime.node_id or "unknown"))
-  pushLine(lines, ("Role: %s  Uptime: %ss"):format(
-    tostring(runtime.role.role or "server"),
-    uptimeSeconds(runtime)
-  ))
-  pushLine(lines, ("Net: dir=%s node=%s peers=%s"):format(
-    tostring(net and net.config.directory_channel or "offline"),
-    tostring(net and net.config.node_channel or "offline"),
-    tostring(net and count(net.listNodes()) or 0)
-  ))
-  pushLine(lines, ("Sys: tasks=%s sessions=%s"):format(
-    tostring(tasks and count(tasks.list()) or 0),
-    tostring(auth and count(auth.listSessions()) or 0)
-  ))
-  pushLine(lines, "Services:")
-
-  local reservedLines = 9
-  local serviceBudget = math.max(1, height - reservedLines)
-  local visibleServices = math.min(#serviceItems, serviceBudget)
-  for index = 1, visibleServices do
-    local service = serviceItems[index]
-    pushLine(lines, ("  %-12s %s"):format(service.name, service.status))
+  local view = runtime.ui
+  local width, height = view.size()
+  local net = runtime.services.get("net")
+  local auth = runtime.services.get("auth")
+  local tasks = runtime.services.get("tasks")
+  local peers = net and #net.listNodes() or 0
+  local taskList = tasks and tasks.list() or runtime.kernel.listTasks()
+  local activeTasks = 0
+  for _, task in ipairs(taskList) do
+    if task.status ~= "dead" and task.status ~= "error" then activeTasks = activeTasks + 1 end
   end
-  if #serviceItems > visibleServices then
-    pushLine(lines, ("  ... +%d more"):format(#serviceItems - visibleServices))
+  local sessions = auth and #auth.listSessions() or 0
+  local network = net and net.modem and "ONLINE" or "OFFLINE"
+  view.clear()
+  local row = view.header("CORE", (runtime.hostname or "UNKNOWN") .. " / " .. (runtime.node_id or "UNKNOWN"),
+    height >= 10 and 3 or height >= 5 and 2 or 1)
+  if row < height then view.status(row, "NETWORK", network); row = row + 1 end
+  if height >= 14 and width >= 24 then
+    view.label(row, "PEERS", peers); row = row + 1
+    view.label(row, "TASKS", activeTasks); row = row + 1
+    view.label(row, "SESSIONS", sessions); row = row + 1
+  elseif row < height then
+    view.at(1, row, ("P:%d T:%d S:%d"):format(peers, activeTasks, sessions), "muted")
+    row = row + 1
   end
-
-  pushLine(lines, "")
-  pushLine(lines, "Enter: shell   R: refresh")
-
-  local start = math.max(1, #lines - height + 1)
-  for lineIndex = start, #lines do
-    local text = lines[lineIndex]
-    if #text > width then
-      text = text:sub(1, width)
+  if row < height then view.label(row, "UPTIME", uptime(runtime)); row = row + 1 end
+  local services = runtime.services.list()
+  if row < height - 1 then
+    view.at(1, row, "SERVICES", "accent"); row = row + 1
+    local budget = height - row
+    local visible = math.min(#services, budget)
+    if #services > budget then visible = math.max(0, budget - 1) end
+    for index = 1, visible do
+      local entry = services[index]
+      local state = entry.status == "running" and "ONLINE"
+        or entry.status == "failed" and "CRITICAL"
+        or entry.status == "starting" and "WARNING" or "OFFLINE"
+      view.status(row, entry.name, state); row = row + 1
     end
-    print(text)
+    if #services > visible and row < height then
+      view.at(1, row, ("+%d services"):format(#services - visible), "muted")
+    end
   end
+  local hint = view.backend.input and "[ENTER] SHELL  [R] REFRESH" or "CORE / DISPLAY ONLY"
+  if width < 28 and view.backend.input then hint = "ENTER:shell R:refresh" end
+  if height > 1 then view.at(1, height, hint, "muted") end
 end
 
-local app = define({
+return define({
   name = "server",
   run = function(runtime)
-    runtime.logger.info("server app online")
-
-    local wakeEvents = {
-      ["timer"] = true,
-      ["aeon:service.started"] = true,
-      ["aeon:service.stopped"] = true,
-      ["aeon:service.failed"] = true,
-      ["aeon:tasks.changed"] = true,
-      ["aeon:auth.login"] = true,
-      ["aeon:auth.logout"] = true,
-      ["aeon:net.node.updated"] = true,
-    }
-
+    runtime.logger.info("core surface online")
+    local timer = nil
     while true do
       draw(runtime)
-      local timer = os.startTimer(3)
-
+      if not timer then timer = os.startTimer(3) end
       while true do
-        local eventName, timerId = coroutine.yield()
-        if eventName == "timer" and timerId == timer then
+        local eventName, value = runtime.ui.wait()
+        if eventName == "timer" and value == timer then timer = nil; break end
+        if eventName == "key" and value == keys.enter and runtime.ui.backend.input then
+          if os.cancelTimer then os.cancelTimer(timer) end
+          local ok, err = runtime.apps.run(dofile("/aeon/apps/terminal.lua"))
+          if not ok then runtime.logger.warn("terminal returned: " .. tostring(err)) end
+          timer = nil
           break
         end
-
-        if eventName == "key" and timerId == keys.enter then
-          shell.run(runtime)
-          break
-        end
-
-        if eventName == "char" and (timerId == "r" or timerId == "R") then
-          break
-        end
-
-        if wakeEvents[eventName] then
-          break
-        end
+        if eventName == "term_resize" or eventName == "monitor_resize"
+          or eventName == "aeon:devices.changed" or eventName == "aeon:net.node.updated"
+          or eventName:match("^aeon:service%.") or eventName:match("^aeon:auth%.")
+          or (eventName == "char" and (value == "r" or value == "R")) then break end
       end
     end
   end,
 })
-
-return app

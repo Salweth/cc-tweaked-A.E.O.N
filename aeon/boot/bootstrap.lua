@@ -40,6 +40,9 @@ function bootstrap.run()
   local registry = loadModule("/aeon/core/registry.lua")
   local devices = loadModule("/aeon/core/devices.lua")
   local services = loadModule("/aeon/core/service.lua")
+  local display = loadModule("/aeon/drivers/display.lua")
+  local ui = loadModule("/aeon/core/ui.lua")
+  local apps = loadModule("/aeon/core/app.lua")
   local systemConfig = config.load("/aeon/etc/aeon.cfg")
   local roleConfig = config.load("/aeon/etc/role.cfg")
   local startupApp, startupAppName = loadStartupApp(systemConfig, roleConfig)
@@ -75,7 +78,35 @@ function bootstrap.run()
     drivers = systemConfig.device_drivers,
   })
   runtime.services = services
+  runtime.surface_kind = pocket and "FIELD" or "TERMINAL"
+  runtime.display = display
+  runtime.ui = ui.create(display.create(nil, { input = true }), systemConfig.theme)
+  runtime.console_messages = {}
+  logger.setConsoleSink(function(line)
+    table.insert(runtime.console_messages, line)
+    if #runtime.console_messages > 32 then table.remove(runtime.console_messages, 1) end
+  end)
   packageCore = packageCore or loadModule("/aeon/core/package.lua")
+  local installedPackages = packageCore.listInstalled()
+  for _, packageEntry in ipairs(installedPackages) do
+    local drivers = (packageEntry.entrypoints or {}).drivers or {}
+    if type(drivers) ~= "table" then
+      logger.warn("package drivers must be a list: " .. tostring(packageEntry.id))
+      drivers = {}
+    end
+    for _, driverName in ipairs(drivers) do
+      if type(driverName) ~= "string" or not driverName:match("^[%w_%-]+$") then
+        logger.warn("invalid package driver name: " .. tostring(driverName))
+      else
+        local path = ("/aeon/drivers/%s.lua"):format(driverName)
+        local ok, driver = pcall(dofile, path)
+        local registered, err = false, driver
+        if ok then registered, err = runtime.devices.registerDriver(driver) end
+        if not registered then logger.warn("package driver " .. path .. ": " .. tostring(err)) end
+      end
+    end
+  end
+  if #installedPackages > 0 then runtime.devices.rebuild("packages") end
 
   logger.info(
     ("machine profile loaded: role=%s hostname=%s"):format(
@@ -85,6 +116,7 @@ function bootstrap.run()
   )
 
   kernel.init(runtime)
+  runtime.apps = apps.create(runtime)
   services.init(runtime)
   services.register("log", loadModule("/aeon/services/svc_log.lua"))
   services.register("registry", loadModule("/aeon/services/svc_registry.lua"))
@@ -96,7 +128,7 @@ function bootstrap.run()
     services.register("server", loadModule("/aeon/services/svc_server.lua"))
   end
 
-  for _, packageEntry in ipairs(packageCore.listInstalled()) do
+  for _, packageEntry in ipairs(installedPackages) do
     local entrypoints = packageEntry.entrypoints or {}
     for _, serviceName in ipairs(entrypoints.services or {}) do
       local path = ("/aeon/services/%s.lua"):format(serviceName)
@@ -108,17 +140,14 @@ function bootstrap.run()
 
   services.startEssential()
 
-  for _, packageEntry in ipairs(packageCore.listInstalled()) do
+  for _, packageEntry in ipairs(installedPackages) do
     local entrypoints = packageEntry.entrypoints or {}
     for _, serviceName in ipairs(entrypoints.services or {}) do
       services.start(serviceName)
     end
   end
 
-  kernel.spawn("app:" .. startupAppName, startupApp.run, {
-    owner = startupAppName,
-    kind = "app",
-  })
+  runtime.apps.start(startupApp)
   kernel.run()
 end
 
